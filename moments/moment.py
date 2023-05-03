@@ -1,7 +1,7 @@
 import re
 import yaml
 from abc import ABCMeta, abstractmethod
-from typing import Any, Type, Union
+from typing import Any, Type, Union, Tuple
 from copy import deepcopy
 
 # Define the main Occurrence class
@@ -16,7 +16,7 @@ class Occurrence(metaclass=ABCMeta):
 
     @staticmethod
     @abstractmethod
-    def parse(line: str):
+    def parse(line: str) -> "Occurrence":
         pass
 
     def __str__(self: "Occurrence") -> str:
@@ -34,9 +34,10 @@ class Thought(Occurrence):
         super().__init__(thought if thought else "")
 
     @staticmethod
-    def parse(line: str):
+    def parse(line: str) -> "Thought":
         if match := re.match(r"^Thought:\s+\"(.+)\"$", line):
             return Thought(thought=match.group(1))
+        raise MomentParseException(f"Unable to parse:\n\t{line})")
 
     def __str__(self) -> str:
         return f'Thought: "{self.content}"'
@@ -49,9 +50,10 @@ class Instructions(Occurrence):
         super().__init__(instructions if instructions else "")
 
     @staticmethod
-    def parse(line: str):
+    def parse(line: str) -> "Instructions":
         if match := re.match(r"^Instructions:\s+\"(.+)\"$", line):
             return Instructions(instructions=match.group(1))
+        raise MomentParseException(f"Unable to parse:\n\t{line})")
 
     def __str__(self) -> str:
         return f'Instructions: "{self.content}"'
@@ -64,9 +66,10 @@ class Begin(Occurrence):
         super().__init__("")
 
     @staticmethod
-    def parse(line: str):
+    def parse(line: str) -> "Begin":
         if line.startswith("Begin."):
             return Begin()
+        raise MomentParseException(f"Unable to parse:\n\t{line})")
 
     def __str__(self) -> str:
         return "Begin.\n\n"
@@ -79,9 +82,10 @@ class Motivation(Occurrence):
         super().__init__(motivation if motivation else "")
 
     @staticmethod
-    def parse(line: str):
+    def parse(line: str) -> "Motivation":
         if match := re.match(r"^Motivation:\s+\"(.+)\"$", line):
             return Motivation(motivation=match.group(1))
+        raise MomentParseException(f"Unable to parse:\n\t{line})")
 
     def __str__(self) -> str:
         return f'Motivation: "{self.content}"'
@@ -94,9 +98,10 @@ class Observation(Occurrence):
         super().__init__(observation if observation else "")
 
     @staticmethod
-    def parse(line: str):
+    def parse(line: str) -> "Observation":
         if match := re.match(r"^Observation:\s+\"(.+)\"$", line):
             return Observation(observation=match.group(1))
+        raise MomentParseException(f"Unable to parse:\n\t{line})")
 
     def __str__(self) -> str:
         return f'Observation: "{self.content}"\n'
@@ -109,10 +114,11 @@ class Context(Occurrence):
         super().__init__(context if context else "")
 
     @staticmethod
-    def parse(line: str):
+    def parse(line: str) -> "Context":
         if match := re.match(r"^Context:\s+```(.+?)```$", line):
             yaml_content = yaml.safe_load(match.group(1))
             return Context(context=yaml_content)
+        raise MomentParseException(f"Unable to parse:\n\t{line})")
 
     def __str__(self) -> str:
         yaml_content = yaml.dump(self.content, default_flow_style=False).strip()
@@ -128,9 +134,10 @@ class Self(Occurrence):
         )
 
     @staticmethod
-    def parse(line: str):
+    def parse(line: str) -> "Self":
         if match := re.match(r"^Self:\s+(\((.*)\)\s+)?\"(.+)\"$", line):
             return Self(emotion=match.group(2), says=match.group(3))
+        raise MomentParseException(f"Unable to parse:\n\t{line})")
 
     def __str__(self) -> str:
         emotion, says = self.content["emotion"], self.content["says"]
@@ -160,7 +167,7 @@ class Participant(Occurrence):
         )
 
     @staticmethod
-    def parse(line: str):
+    def parse(line: str) -> "Participant":
         if match := re.match(
             r"^(.+)\s+\((\d+|unidentified|unknown)\):\s+(\((.*)\)\s+)?\"(.+)\"$",
             line,
@@ -171,6 +178,7 @@ class Participant(Occurrence):
                 emotion=match.group(4),
                 says=match.group(5),
             )
+        raise MomentParseException(f"Unable to parse:\n\t{line})")
 
     def __str__(self) -> str:
         name, identifier, emotion, says = (
@@ -208,7 +216,7 @@ class Identification(Occurrence):
         )
 
     @staticmethod
-    def parse(line: str):
+    def parse(line: str) -> "Identification":
         if match := re.match(
             r"^Identification:\s+(.+)\s+\((\s+|unidentified)\)\s+is\s+now\s+(.+)\s+\((\s+)\)\s+\[(.+)\].$",
             line,
@@ -220,6 +228,7 @@ class Identification(Occurrence):
                 new_id=match.group(4),
                 kind=match.group(5),
             )
+        raise MomentParseException(f"Unable to parse:\n\t{line})")
 
     def __str__(self) -> str:
         old_name, old_id, new_name, new_id, kind = (
@@ -241,10 +250,11 @@ class Waiting(Occurrence):
         super().__init__(waiting_on if waiting_on else "")
 
     @staticmethod
-    def parse(line: str):
+    def parse(line: str) -> "Waiting":
         if match := re.match(r"^Waiting:\s+```(.+?)```$", line):
             yaml_content = yaml.safe_load(match.group(1))
             return Waiting(waiting_on=yaml_content)
+        raise MomentParseException(f"Unable to parse:\n\t{line})")
 
     def __str__(self) -> str:
         yaml_content = yaml.dump(self.content, default_flow_style=False).strip()
@@ -261,10 +271,11 @@ class Resuming(Occurrence):
         super().__init__(resuming_on if resuming_on else "")
 
     @staticmethod
-    def parse(line: str):
+    def parse(line: str) -> "Resuming":
         if match := re.match(r"^Resuming:\s+```(.+?)```$", line):
             yaml_content = yaml.safe_load(match.group(1))
             return Resuming(resuming_on=yaml_content)
+        raise MomentParseException(f"Unable to parse:\n\t{line})")
 
     def __str__(self) -> str:
         yaml_content = yaml.dump(self.content, default_flow_style=False).strip()
@@ -278,10 +289,11 @@ class Working(Occurrence):
         super().__init__(working_on if working_on else "")
 
     @staticmethod
-    def parse(line: str):
+    def parse(line: str) -> "Working":
         if match := re.match(r"^Working:\s+```(.+?)```$", line):
             yaml_content = yaml.safe_load(match.group(1))
             return Working(working_on=yaml_content)
+        raise MomentParseException(f"Unable to parse:\n\t{line})")
 
     def __str__(self) -> str:
         yaml_content = yaml.dump(self.content, default_flow_style=False).strip()
@@ -295,10 +307,11 @@ class Action(Occurrence):
         super().__init__(action if action else "")
 
     @staticmethod
-    def parse(line: str):
+    def parse(line: str) -> "Action":
         if match := re.match(r"^Action:\s+```(.+?)```$", line):
             yaml_content = yaml.safe_load(match.group(1))
             return Action(action=yaml_content)
+        raise MomentParseException(f"Unable to parse:\n\t{line})")
 
     def __str__(self) -> str:
         yaml_content = yaml.dump(self.content, default_flow_style=False).strip()
@@ -314,33 +327,44 @@ class Example(Occurrence):
         )
 
     @staticmethod
-    def parse(line: str):
+    def parse(line: str) -> "Example":
         if match := re.match(r"^Example:\s+(.+)\s+-\s+'''(.+)'''$", line):
             return Example(title=match.group(1), example=match.group(2))
+        raise MomentParseException(f"Unable to parse:\n\t{line})")
 
     def __str__(self) -> str:
         title, example = (self.content["title"], self.content["example"])
         return f"Example: {title} - '''{example}'''"
 
 
+class MomentParseException(Exception):
+    pass
+
+
 class Moment:
     """A class specifically designed for agents to capture and structure their observations of events and interactions in real life or online environments."""
 
-    occurrences: list[Occurrence] = []
+    id: str
+    occurrences: list[Occurrence]
 
-    def __init__(self, occurrences: list[Occurrence]):
+    # pylint: disable=redefined-builtin
+    def __init__(self, id: str, occurrences: list[Occurrence]):
+        self.id = id
         self.occurrences = occurrences
 
     @classmethod
     def parse(cls, obj: Union[str, dict]) -> "Moment":
+        id: str
+        occurrences: list[Occurrence]
         if isinstance(obj, str):
-            occurrences = cls._parse_text(obj)
+            id, occurrences = cls._parse_text(obj)
         elif isinstance(obj, dict):
-            occurrences = cls._parse_dict(obj)
-        return cls(occurrences)
+            id, occurrences = cls._parse_dict(obj)
+        return cls(id=id, occurrences=occurrences)
 
     @classmethod
-    def _parse_dict(cls, moment: dict) -> list[Occurrence]:
+    def _parse_dict(cls, moment: dict) -> Tuple[str, list[Occurrence]]:
+        id = moment["id"]
         occurrences: list[Occurrence] = []
         for occurrence in moment["occurrences"]:
             kind = occurrence.pop("kind", None)
@@ -374,19 +398,24 @@ class Moment:
                 case "Working":
                     occurrences.append(Working(**occurrence))
 
-        return occurrences
+        return id, occurrences
 
     @classmethod
-    def _parse_text(cls, text: str) -> list[Occurrence]:
-        occurrences = []
+    def _parse_text(cls, text: str) -> Tuple[str, list[Occurrence]]:
+        id: str
+        occurrences: list[Occurrence] = []
         lines = text.split("\n")
-
         for line in lines:
             line = line.strip()
             if not line:
                 continue
-            occurrence_class: Type[Occurrence] = None
-            for occurrence_class in [
+            if line.startswith("#"):
+                # Moment Id
+                if match := re.match(r"^#\s+Moment\s*[ID|id|Id]:\s+(.+)$", line):
+                    id = str(match.group(1))
+
+            occurrence_class: Type[Occurrence]
+            occurrence_classes: list[Type[Occurrence]] = [
                 Instructions,
                 Example,
                 Begin,
@@ -401,7 +430,8 @@ class Moment:
                 Waiting,
                 Resuming,
                 Working,
-            ]:
+            ]
+            for occurrence_class in occurrence_classes:
                 parsed_occurrence = occurrence_class.parse(line)
                 if parsed_occurrence:
                     occurrences.append(parsed_occurrence)
@@ -410,7 +440,7 @@ class Moment:
                 if line.strip() != "":
                     raise ValueError(f"Invalid MDL syntax in line: {line}")
 
-        return occurrences
+        return id, occurrences
 
     def __str__(self) -> str:
         moment_str = ""

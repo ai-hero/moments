@@ -3,41 +3,43 @@ from moments.moment import Moment, Occurrence
 from typing import Union
 
 
-class Snapshot(Moment):
+class Snapshot:
     """A class to capture a moment at specific time."""
 
-    snapshot_id: str
+    id: str
     previous_snapshot_id: str
     timestamp: str
 
+    # pylint: disable=redefined-builtin
     def __init__(
         self: "Snapshot",
-        snapshot_id: str,
-        occurrences: list[Occurrence],
+        id: str,
+        moment: Moment,
         previous_snapshot_id: str,
         timestamp: str,
     ):
-        super().__init__(occurrences)
-        self.snapshot_id = snapshot_id
+        self.id = id
+        self.moment = moment
         self.previous_snapshot_id = previous_snapshot_id
         self.timestamp = timestamp
 
     @classmethod
     def parse(cls, obj: Union[str, dict]) -> "Snapshot":
         if isinstance(obj, dict):
-            snapshot_id = obj["snapshot_id"]
+            id = obj["id"]
             previous_snapshot_id = obj.get("previous_snapshot_id", None)
             timestamp = obj.get("timestamp", None)
-            occurrences = super()._parse_dict(obj)
+            moment = Moment.parse(obj["moment"])
         elif isinstance(obj, str):
             lines = str(obj).splitlines()
+            moment_text = ""
             for line in lines:
                 if line.startswith("#"):
                     # Snapshot Id
                     if match := re.match(r"^#\s+Snapshot\s*[ID|id|Id]:\s+(.+)$", line):
-                        snapshot_id = match.group(1)
+                        id = match.group(1)
                     else:
-                        snapshot_id = None
+                        id = None
 
                     # Previous Snapshot Id
                     if match := re.match(
@@ -52,19 +54,21 @@ class Snapshot(Moment):
                         timestamp = match.group(1)
                     else:
                         timestamp = None
-            occurrences = super()._parse_text(obj)
+                else:
+                    moment_text += line + "\n"
+            moment = Moment.parse(moment_text)
         return cls(
-            snapshot_id=snapshot_id,
-            occurrences=occurrences,
+            id=id,
+            moment=moment,
             previous_snapshot_id=previous_snapshot_id,
             timestamp=timestamp,
         )
 
     def __str__(self) -> str:
-        moment_str = ""
-        moment_str += f"# Snapshot ID: {self.snapshot_id}"
+        to_str = ""
+        to_str += f"# Snapshot ID: {self.id}"
         if self.previous_snapshot_id:
-            moment_str += f"# Previous Snapshot ID: {self.previous_snapshot_id}"
+            to_str += f"# Previous Snapshot ID: {self.previous_snapshot_id}"
         if self.timestamp:
-            moment_str += f"# Timestamp: {self.timestamp}"
-        return moment_str + super().__str__()
+            to_str += f"# Timestamp: {self.timestamp}"
+        return to_str + str(self.moment)
