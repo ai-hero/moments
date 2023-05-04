@@ -27,7 +27,9 @@ class Occurrence(metaclass=ABCMeta):
         return [cls.__name__ for cls in cls.__subclasses__()]
 
     def to_dict(self: "Occurrence") -> dict:
-        return deepcopy(self.__dict__)
+        occurrence = deepcopy(self.__dict__)
+        occurrence["kind"] = self.__class__.__name__
+        return occurrence
 
 
 class Thought(Occurrence):
