@@ -26,6 +26,9 @@ class Occurrence(metaclass=ABCMeta):
     def subtypes(cls: Type):
         return [cls.__name__ for cls in cls.__subclasses__()]
 
+    def to_dict(self: "Occurrence") -> dict:
+        return deepcopy(self.__dict__)
+
 
 class Thought(Occurrence):
     """A thought that the agent has. Great to represent "let's think step by step"."""
@@ -449,6 +452,11 @@ class Moment:
         return moment_str
 
     def to_dict(self) -> dict:
-        moment = deepcopy(self.__dict__)
-        moment["kind"] = self.__class__.__name__
-        return moment
+        return deepcopy(
+            {
+                "id": self.id,
+                "occurrences": [
+                    occurrence.to_dict() for occurrence in self.occurrences
+                ],
+            }
+        )

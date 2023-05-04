@@ -1,6 +1,7 @@
 import re
-from moments.moment import Moment, Occurrence
+from moments.moment import Moment
 from typing import Union
+from copy import deepcopy
 
 
 class Snapshot:
@@ -72,3 +73,13 @@ class Snapshot:
         if self.timestamp:
             to_str += f"# Timestamp: {self.timestamp}"
         return to_str + str(self.moment)
+
+    def to_dict(self) -> dict:
+        return deepcopy(
+            {
+                "id": self.id,
+                "previous_snapshot_id": self.previous_snapshot_id,
+                "timestamp": self.timestamp,
+                "moment": self.moment.to_dict(),
+            }
+        )
