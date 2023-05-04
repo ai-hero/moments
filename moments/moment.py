@@ -405,7 +405,7 @@ class Moment:
 
     @classmethod
     def _parse_text(cls, text: str) -> Tuple[str, list[Occurrence]]:
-        id: Optional[str] = None
+        id: str = ""
         occurrences: list[Occurrence] = []
         lines = text.split("\n")
         for line in lines:
@@ -442,7 +442,6 @@ class Moment:
             else:
                 if line.strip() != "":
                     raise ValueError(f"Invalid MDL syntax in line: {line}")
-
         return id, occurrences
 
     def __str__(self) -> str:
