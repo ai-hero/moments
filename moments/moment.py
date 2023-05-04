@@ -1,7 +1,7 @@
 import re
 import yaml
 from abc import ABCMeta, abstractmethod
-from typing import Any, Type, Union, Tuple
+from typing import Any, Type, Union, Tuple, Optional
 from copy import deepcopy
 
 # Define the main Occurrence class
@@ -16,7 +16,7 @@ class Occurrence(metaclass=ABCMeta):
 
     @staticmethod
     @abstractmethod
-    def parse(line: str) -> "Occurrence":
+    def parse(line: str) -> Optional["Occurrence"]:
         pass
 
     def __str__(self: "Occurrence") -> str:
@@ -37,7 +37,7 @@ class Thought(Occurrence):
         super().__init__(thought if thought else "")
 
     @staticmethod
-    def parse(line: str) -> "Thought":
+    def parse(line: str) -> Optional["Thought"]:
         if match := re.match(r"^Thought:\s+\"(.+)\"$", line):
             return Thought(thought=match.group(1))
         return None
@@ -53,7 +53,7 @@ class Instructions(Occurrence):
         super().__init__(instructions if instructions else "")
 
     @staticmethod
-    def parse(line: str) -> "Instructions":
+    def parse(line: str) -> Optional["Instructions"]:
         if match := re.match(r"^Instructions:\s+\"(.+)\"$", line):
             return Instructions(instructions=match.group(1))
         return None
@@ -69,7 +69,7 @@ class Begin(Occurrence):
         super().__init__("")
 
     @staticmethod
-    def parse(line: str) -> "Begin":
+    def parse(line: str) -> Optional["Begin"]:
         if line.startswith("Begin."):
             return Begin()
         return None
@@ -85,7 +85,7 @@ class Motivation(Occurrence):
         super().__init__(motivation if motivation else "")
 
     @staticmethod
-    def parse(line: str) -> "Motivation":
+    def parse(line: str) -> Optional["Motivation"]:
         if match := re.match(r"^Motivation:\s+\"(.+)\"$", line):
             return Motivation(motivation=match.group(1))
         return None
@@ -101,7 +101,7 @@ class Observation(Occurrence):
         super().__init__(observation if observation else "")
 
     @staticmethod
-    def parse(line: str) -> "Observation":
+    def parse(line: str) -> Optional["Observation"]:
         if match := re.match(r"^Observation:\s+\"(.+)\"$", line):
             return Observation(observation=match.group(1))
         return None
@@ -117,7 +117,7 @@ class Context(Occurrence):
         super().__init__(context if context else "")
 
     @staticmethod
-    def parse(line: str) -> "Context":
+    def parse(line: str) -> Optional["Context"]:
         if match := re.match(r"^Context:\s+```(.+?)```$", line):
             yaml_content = yaml.safe_load(match.group(1))
             return Context(context=yaml_content)
@@ -137,7 +137,7 @@ class Self(Occurrence):
         )
 
     @staticmethod
-    def parse(line: str) -> "Self":
+    def parse(line: str) -> Optional["Self"]:
         if match := re.match(r"^Self:\s+(\((.*)\)\s+)?\"(.+)\"$", line):
             return Self(emotion=match.group(2), says=match.group(3))
         return None
@@ -170,7 +170,7 @@ class Participant(Occurrence):
         )
 
     @staticmethod
-    def parse(line: str) -> "Participant":
+    def parse(line: str) -> Optional["Participant"]:
         if match := re.match(
             r"^(.+)\s+\((\d+|unidentified|unknown)\):\s+(\((.*)\)\s+)?\"(.+)\"$",
             line,
@@ -219,7 +219,7 @@ class Identification(Occurrence):
         )
 
     @staticmethod
-    def parse(line: str) -> "Identification":
+    def parse(line: str) -> Optional["Identification"]:
         if match := re.match(
             r"^Identification:\s+(.+)\s+\((\s+|unidentified)\)\s+is\s+now\s+(.+)\s+\((\s+)\)\s+\[(.+)\].$",
             line,
@@ -253,7 +253,7 @@ class Waiting(Occurrence):
         super().__init__(waiting_on if waiting_on else "")
 
     @staticmethod
-    def parse(line: str) -> "Waiting":
+    def parse(line: str) -> Optional["Waiting"]:
         if match := re.match(r"^Waiting:\s+```(.+?)```$", line):
             yaml_content = yaml.safe_load(match.group(1))
             return Waiting(waiting_on=yaml_content)
@@ -274,7 +274,7 @@ class Resuming(Occurrence):
         super().__init__(resuming_on if resuming_on else "")
 
     @staticmethod
-    def parse(line: str) -> "Resuming":
+    def parse(line: str) -> Optional["Resuming"]:
         if match := re.match(r"^Resuming:\s+```(.+?)```$", line):
             yaml_content = yaml.safe_load(match.group(1))
             return Resuming(resuming_on=yaml_content)
@@ -292,7 +292,7 @@ class Working(Occurrence):
         super().__init__(working_on if working_on else "")
 
     @staticmethod
-    def parse(line: str) -> "Working":
+    def parse(line: str) -> Optional["Working"]:
         if match := re.match(r"^Working:\s+```(.+?)```$", line):
             yaml_content = yaml.safe_load(match.group(1))
             return Working(working_on=yaml_content)
@@ -310,7 +310,7 @@ class Action(Occurrence):
         super().__init__(action if action else "")
 
     @staticmethod
-    def parse(line: str) -> "Action":
+    def parse(line: str) -> Optional["Action"]:
         if match := re.match(r"^Action:\s+```(.+?)```$", line):
             yaml_content = yaml.safe_load(match.group(1))
             return Action(action=yaml_content)
@@ -330,7 +330,7 @@ class Example(Occurrence):
         )
 
     @staticmethod
-    def parse(line: str) -> "Example":
+    def parse(line: str) -> Optional["Example"]:
         if match := re.match(r"^Example:\s+(.+)\s+-\s+'''(.+)'''$", line):
             return Example(title=match.group(1), example=match.group(2))
         return None
