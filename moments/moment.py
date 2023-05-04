@@ -40,7 +40,7 @@ class Thought(Occurrence):
     def parse(line: str) -> "Thought":
         if match := re.match(r"^Thought:\s+\"(.+)\"$", line):
             return Thought(thought=match.group(1))
-        raise MomentParseException(f"Unable to parse:\n\t{line})")
+        raise MomentParseException(f"Unable to parse:\n\t{line}")
 
     def __str__(self) -> str:
         return f'Thought: "{self.content}"'
@@ -56,7 +56,7 @@ class Instructions(Occurrence):
     def parse(line: str) -> "Instructions":
         if match := re.match(r"^Instructions:\s+\"(.+)\"$", line):
             return Instructions(instructions=match.group(1))
-        raise MomentParseException(f"Unable to parse:\n\t{line})")
+        raise MomentParseException(f"Unable to parse:\n\t{line}")
 
     def __str__(self) -> str:
         return f'Instructions: "{self.content}"'
@@ -72,7 +72,7 @@ class Begin(Occurrence):
     def parse(line: str) -> "Begin":
         if line.startswith("Begin."):
             return Begin()
-        raise MomentParseException(f"Unable to parse:\n\t{line})")
+        raise MomentParseException(f"Unable to parse:\n\t{line}")
 
     def __str__(self) -> str:
         return "Begin.\n\n"
@@ -88,7 +88,7 @@ class Motivation(Occurrence):
     def parse(line: str) -> "Motivation":
         if match := re.match(r"^Motivation:\s+\"(.+)\"$", line):
             return Motivation(motivation=match.group(1))
-        raise MomentParseException(f"Unable to parse:\n\t{line})")
+        raise MomentParseException(f"Unable to parse:\n\t{line}")
 
     def __str__(self) -> str:
         return f'Motivation: "{self.content}"'
@@ -104,7 +104,7 @@ class Observation(Occurrence):
     def parse(line: str) -> "Observation":
         if match := re.match(r"^Observation:\s+\"(.+)\"$", line):
             return Observation(observation=match.group(1))
-        raise MomentParseException(f"Unable to parse:\n\t{line})")
+        raise MomentParseException(f"Unable to parse:\n\t{line}")
 
     def __str__(self) -> str:
         return f'Observation: "{self.content}"\n'
@@ -121,7 +121,7 @@ class Context(Occurrence):
         if match := re.match(r"^Context:\s+```(.+?)```$", line):
             yaml_content = yaml.safe_load(match.group(1))
             return Context(context=yaml_content)
-        raise MomentParseException(f"Unable to parse:\n\t{line})")
+        raise MomentParseException(f"Unable to parse:\n\t{line}")
 
     def __str__(self) -> str:
         yaml_content = yaml.dump(self.content, default_flow_style=False).strip()
@@ -140,7 +140,7 @@ class Self(Occurrence):
     def parse(line: str) -> "Self":
         if match := re.match(r"^Self:\s+(\((.*)\)\s+)?\"(.+)\"$", line):
             return Self(emotion=match.group(2), says=match.group(3))
-        raise MomentParseException(f"Unable to parse:\n\t{line})")
+        raise MomentParseException(f"Unable to parse:\n\t{line}")
 
     def __str__(self) -> str:
         emotion, says = self.content["emotion"], self.content["says"]
@@ -181,7 +181,7 @@ class Participant(Occurrence):
                 emotion=match.group(4),
                 says=match.group(5),
             )
-        raise MomentParseException(f"Unable to parse:\n\t{line})")
+        raise MomentParseException(f"Unable to parse:\n\t{line}")
 
     def __str__(self) -> str:
         name, identifier, emotion, says = (
@@ -231,7 +231,7 @@ class Identification(Occurrence):
                 new_id=match.group(4),
                 kind=match.group(5),
             )
-        raise MomentParseException(f"Unable to parse:\n\t{line})")
+        raise MomentParseException(f"Unable to parse:\n\t{line}")
 
     def __str__(self) -> str:
         old_name, old_id, new_name, new_id, kind = (
@@ -257,7 +257,7 @@ class Waiting(Occurrence):
         if match := re.match(r"^Waiting:\s+```(.+?)```$", line):
             yaml_content = yaml.safe_load(match.group(1))
             return Waiting(waiting_on=yaml_content)
-        raise MomentParseException(f"Unable to parse:\n\t{line})")
+        raise MomentParseException(f"Unable to parse:\n\t{line}")
 
     def __str__(self) -> str:
         yaml_content = yaml.dump(self.content, default_flow_style=False).strip()
@@ -278,7 +278,7 @@ class Resuming(Occurrence):
         if match := re.match(r"^Resuming:\s+```(.+?)```$", line):
             yaml_content = yaml.safe_load(match.group(1))
             return Resuming(resuming_on=yaml_content)
-        raise MomentParseException(f"Unable to parse:\n\t{line})")
+        raise MomentParseException(f"Unable to parse:\n\t{line}")
 
     def __str__(self) -> str:
         yaml_content = yaml.dump(self.content, default_flow_style=False).strip()
@@ -296,7 +296,7 @@ class Working(Occurrence):
         if match := re.match(r"^Working:\s+```(.+?)```$", line):
             yaml_content = yaml.safe_load(match.group(1))
             return Working(working_on=yaml_content)
-        raise MomentParseException(f"Unable to parse:\n\t{line})")
+        raise MomentParseException(f"Unable to parse:\n\t{line}")
 
     def __str__(self) -> str:
         yaml_content = yaml.dump(self.content, default_flow_style=False).strip()
@@ -314,7 +314,7 @@ class Action(Occurrence):
         if match := re.match(r"^Action:\s+```(.+?)```$", line):
             yaml_content = yaml.safe_load(match.group(1))
             return Action(action=yaml_content)
-        raise MomentParseException(f"Unable to parse:\n\t{line})")
+        raise MomentParseException(f"Unable to parse:\n\t{line}")
 
     def __str__(self) -> str:
         yaml_content = yaml.dump(self.content, default_flow_style=False).strip()
@@ -331,9 +331,11 @@ class Example(Occurrence):
 
     @staticmethod
     def parse(line: str) -> "Example":
-        if match := re.match(r"^Example:\s+(.+)\s+-\s+'''(.+)'''$", line):
+        if match := re.match(
+            r"^Example:\s+(.+)\s+-\s+'''((?:[^']|'(?!''))+)'''$", line, re.DOTALL
+        ):
             return Example(title=match.group(1), example=match.group(2))
-        raise MomentParseException(f"Unable to parse:\n\t{line})")
+        raise MomentParseException(f"Unable to parse:\n\t{line}")
 
     def __str__(self) -> str:
         title, example = (self.content["title"], self.content["example"])
