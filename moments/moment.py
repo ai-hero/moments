@@ -377,7 +377,7 @@ class Moment:
                 case "Instructions":
                     occurrences.append(Instructions(occurrence["content"]))
                 case "Example":
-                    occurrences.append(Example(occurrence["content"]))
+                    occurrences.append(Example(**occurrence["content"]))
                 case "Begin":
                     occurrences.append(Begin())
                 case "Thought":
