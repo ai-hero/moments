@@ -405,7 +405,7 @@ class Moment:
 
     @classmethod
     def _parse_text(cls, text: str) -> Tuple[str, list[Occurrence]]:
-        id: str
+        id: Optional[str] = None
         occurrences: list[Occurrence] = []
         lines = text.split("\n")
         for line in lines:
