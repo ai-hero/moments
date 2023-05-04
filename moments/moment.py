@@ -32,22 +32,6 @@ class Occurrence(metaclass=ABCMeta):
         return occurrence
 
 
-class Thought(Occurrence):
-    """A thought that the agent has. Great to represent "let's think step by step"."""
-
-    def __init__(self: "Thought", thought: str):
-        super().__init__(thought if thought else "")
-
-    @staticmethod
-    def parse(line: str) -> Optional["Thought"]:
-        if match := re.match(r"^Thought:\s+\"(.+)\"$", line):
-            return Thought(thought=match.group(1))
-        return None
-
-    def __str__(self) -> str:
-        return f'Thought: "{self.content}"'
-
-
 class Instructions(Occurrence):
     """Instructions by the agent developer to this agent to play their role. That the agent must abide by."""
 
@@ -64,6 +48,25 @@ class Instructions(Occurrence):
         return f'Instructions: "{self.content}"'
 
 
+class Example(Occurrence):
+    """An example conversation including title"""
+
+    def __init__(self: "Example", title: str, example: str):
+        super().__init__(
+            {"title": title if title else "", "example": example if example else ""}
+        )
+
+    @staticmethod
+    def parse(line: str) -> Optional["Example"]:
+        if match := re.match(r"^Example:\s+(.+)\s+-\s+'''(.+)'''$", line):
+            return Example(title=match.group(1), example=match.group(2))
+        return None
+
+    def __str__(self) -> str:
+        title, example = (self.content["title"], self.content["example"])
+        return f"Example: {title} - '''{example}'''"
+
+
 class Begin(Occurrence):
     """A begin message that ends system information."""
 
@@ -78,38 +81,6 @@ class Begin(Occurrence):
 
     def __str__(self) -> str:
         return "Begin.\n\n"
-
-
-class Motivation(Occurrence):
-    """The motivations or goals of the agent."""
-
-    def __init__(self: "Motivation", motivation: str):
-        super().__init__(motivation if motivation else "")
-
-    @staticmethod
-    def parse(line: str) -> Optional["Motivation"]:
-        if match := re.match(r"^Motivation:\s+\"(.+)\"$", line):
-            return Motivation(motivation=match.group(1))
-        return None
-
-    def __str__(self) -> str:
-        return f'Motivation: "{self.content}"'
-
-
-class Observation(Occurrence):
-    """The observation an agent makes about the world or the users."""
-
-    def __init__(self: "Observation", observation: str):
-        super().__init__(observation if observation else "")
-
-    @staticmethod
-    def parse(line: str) -> Optional["Observation"]:
-        if match := re.match(r"^Observation:\s+\"(.+)\"$", line):
-            return Observation(observation=match.group(1))
-        return None
-
-    def __str__(self) -> str:
-        return f'Observation: "{self.content}"\n'
 
 
 class Context(Occurrence):
@@ -194,6 +165,54 @@ class Participant(Occurrence):
         )
         emotion_str = f"({emotion} " if emotion else ""
         return f'{name} ({identifier}): {emotion_str}"{says}"'
+
+
+class Motivation(Occurrence):
+    """The motivations or goals of the agent."""
+
+    def __init__(self: "Motivation", motivation: str):
+        super().__init__(motivation if motivation else "")
+
+    @staticmethod
+    def parse(line: str) -> Optional["Motivation"]:
+        if match := re.match(r"^Motivation:\s+\"(.+)\"$", line):
+            return Motivation(motivation=match.group(1))
+        return None
+
+    def __str__(self) -> str:
+        return f'Motivation: "{self.content}"'
+
+
+class Observation(Occurrence):
+    """The observation an agent makes about the world or the users."""
+
+    def __init__(self: "Observation", observation: str):
+        super().__init__(observation if observation else "")
+
+    @staticmethod
+    def parse(line: str) -> Optional["Observation"]:
+        if match := re.match(r"^Observation:\s+\"(.+)\"$", line):
+            return Observation(observation=match.group(1))
+        return None
+
+    def __str__(self) -> str:
+        return f'Observation: "{self.content}"\n'
+
+
+class Thought(Occurrence):
+    """A thought that the agent has. Great to represent "let's think step by step"."""
+
+    def __init__(self: "Thought", thought: str):
+        super().__init__(thought if thought else "")
+
+    @staticmethod
+    def parse(line: str) -> Optional["Thought"]:
+        if match := re.match(r"^Thought:\s+\"(.+)\"$", line):
+            return Thought(thought=match.group(1))
+        return None
+
+    def __str__(self) -> str:
+        return f'Thought: "{self.content}"'
 
 
 class Identification(Occurrence):
@@ -323,25 +342,6 @@ class Action(Occurrence):
         return f"Action: ```{yaml_content}```"
 
 
-class Example(Occurrence):
-    """An example conversation including title"""
-
-    def __init__(self: "Example", title: str, example: str):
-        super().__init__(
-            {"title": title if title else "", "example": example if example else ""}
-        )
-
-    @staticmethod
-    def parse(line: str) -> Optional["Example"]:
-        if match := re.match(r"^Example:\s+(.+)\s+-\s+'''(.+)'''$", line):
-            return Example(title=match.group(1), example=match.group(2))
-        return None
-
-    def __str__(self) -> str:
-        title, example = (self.content["title"], self.content["example"])
-        return f"Example: {title} - '''{example}'''"
-
-
 class MomentParseException(Exception):
     pass
 
@@ -375,33 +375,33 @@ class Moment:
             kind = occurrence.pop("kind", None)
             match kind:
                 case "Instructions":
-                    occurrences.append(Instructions(**occurrence))
+                    occurrences.append(Instructions(occurrence["content"]))
                 case "Example":
-                    occurrences.append(Example(**occurrence))
+                    occurrences.append(Example(occurrence["content"]))
                 case "Begin":
                     occurrences.append(Begin())
                 case "Thought":
-                    occurrences.append(Thought(**occurrence))
+                    occurrences.append(Thought(occurrence["content"]))
                 case "Motivation":
-                    occurrences.append(Motivation(**occurrence))
+                    occurrences.append(Motivation(occurrence["content"]))
                 case "Observation":
-                    occurrences.append(Observation(**occurrence))
+                    occurrences.append(Observation(occurrence["content"]))
                 case "Self":
-                    occurrences.append(Self(**occurrence))
+                    occurrences.append(Self(**occurrence["content"]))
                 case "Participant":
-                    occurrences.append(Participant(**occurrence))
+                    occurrences.append(Participant(**occurrence["content"]))
                 case "Identification":
-                    occurrences.append(Identification(**occurrence))
+                    occurrences.append(Identification(**occurrence["content"]))
                 case "Context":
-                    occurrences.append(Context(**occurrence))
+                    occurrences.append(Context(occurrence["content"]))
                 case "Action":
-                    occurrences.append(Action(**occurrence))
+                    occurrences.append(Action(**occurrence["content"]))
                 case "Waiting":
-                    occurrences.append(Waiting(**occurrence))
+                    occurrences.append(Waiting(**occurrence["content"]))
                 case "Resuming":
-                    occurrences.append(Resuming(**occurrence))
+                    occurrences.append(Resuming(**occurrence["content"]))
                 case "Working":
-                    occurrences.append(Working(**occurrence))
+                    occurrences.append(Working(**occurrence["content"]))
 
         return id, occurrences
 
