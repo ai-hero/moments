@@ -40,7 +40,7 @@ class Instructions(Occurrence):
 
     @staticmethod
     def parse(line: str) -> Optional["Instructions"]:
-        if match := re.match(r"^Instructions:\s+\"(.+)\"$", line):
+        if match := re.match(r"^Instructions:\s+(.+)$", line):
             return Instructions(instructions=match.group(1))
         return None
 
@@ -175,7 +175,7 @@ class Motivation(Occurrence):
 
     @staticmethod
     def parse(line: str) -> Optional["Motivation"]:
-        if match := re.match(r"^Motivation:\s+\"(.+)\"$", line):
+        if match := re.match(r"^Motivation:\s+(.+)$", line):
             return Motivation(motivation=match.group(1))
         return None
 
@@ -191,7 +191,7 @@ class Observation(Occurrence):
 
     @staticmethod
     def parse(line: str) -> Optional["Observation"]:
-        if match := re.match(r"^Observation:\s+\"(.+)\"$", line):
+        if match := re.match(r"^Observation:\s+(.+)$", line):
             return Observation(observation=match.group(1))
         return None
 
@@ -207,7 +207,7 @@ class Thought(Occurrence):
 
     @staticmethod
     def parse(line: str) -> Optional["Thought"]:
-        if match := re.match(r"^Thought:\s+\"(.+)\"$", line):
+        if match := re.match(r"^Thought:\s+(.+)$", line):
             return Thought(thought=match.group(1))
         return None
 
