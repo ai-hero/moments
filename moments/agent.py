@@ -1,7 +1,10 @@
 import yaml
 from abc import ABC, abstractmethod
 from typing import Type
-from moments.moment import Moment, Self
+from moments.moment import Moment
+from moments.snapshot import Snapshot
+from datetime import datetime
+from uuid import uuid4
 
 DEFAULT_NAME = "Leela"
 
@@ -46,24 +49,36 @@ class Agent(ABC):
         self.name = name
         self.config = config
 
-    def init(self: "Agent") -> Moment:
+    def system(self: "Agent") -> Snapshot:
         """Initializes the moment with system part of the prompt"""
-        return Moment.parse(self.config.init)
+        return Snapshot(
+            id=str(uuid4()),
+            moment=Moment.parse(self.config.init),
+            previous_snapshot_id=None,
+            timestamp=datetime.now().isoformat(),
+            annotations={},
+        )
+
+    def next(self: "Agent", snapshot: Snapshot) -> Snapshot:
+        self.before(snapshot.moment)
+        self.do(snapshot.moment)
+        self.after(snapshot.moment)
+        snapshot.previous_snapshot_id = snapshot.id  # Chain it
+        snapshot.id = str(uuid4())  # next it
+        snapshot.timestamp = datetime.now().isoformat()
+        return snapshot
 
     @abstractmethod
-    def before(self: "Agent", moment: Moment) -> Self:
+    def before(self: "Agent", moment: Moment):
         """Hook to add context, observations, motivations, etc."""
-        pass
 
     @abstractmethod
-    def respond(self: "Agent", moment: Moment) -> Self:
+    def do(self: "Agent", moment: Moment):
         """Ask the LLM for the completion"""
-        pass
 
     @abstractmethod
-    def after(self: "Agent", moment: Moment) -> Self:
+    def after(self: "Agent", moment: Moment):
         """Hook to perform actions, etc."""
-        pass
 
 
 class AgentFactory:

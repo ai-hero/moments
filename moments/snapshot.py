@@ -1,6 +1,6 @@
 import re
 from moments.moment import Moment
-from typing import Union
+from typing import Union, Optional
 from copy import deepcopy
 import yaml
 
@@ -9,7 +9,7 @@ class Snapshot:
     """A class to capture a moment at specific time."""
 
     id: str
-    previous_snapshot_id: str
+    previous_snapshot_id: Optional[str]
     timestamp: str
     annotation: dict
 
@@ -18,7 +18,7 @@ class Snapshot:
         self: "Snapshot",
         id: str,
         moment: Moment,
-        previous_snapshot_id: str,
+        previous_snapshot_id: Optional[str],
         timestamp: str,
         annotations: dict,
     ):
