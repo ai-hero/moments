@@ -46,8 +46,23 @@ class Agent(ABC):
         self.name = name
         self.config = config
 
+    def init(self: "Agent") -> Moment:
+        """Initializes the moment with system part of the prompt"""
+        return Moment.parse(self.config.init)
+
+    @abstractmethod
+    def before(self: "Agent", moment: Moment) -> Self:
+        """Hook to add context, observations, motivations, etc."""
+        pass
+
     @abstractmethod
     def respond(self: "Agent", moment: Moment) -> Self:
+        """Ask the LLM for the completion"""
+        pass
+
+    @abstractmethod
+    def after(self: "Agent", moment: Moment) -> Self:
+        """Hook to perform actions, etc."""
         pass
 
 
