@@ -388,8 +388,6 @@ class Moment:
                     occurrences.append(Observation(occurrence["content"]))
                 case "Self":
                     occurrences.append(Self(**occurrence["content"]))
-                case "Participant":
-                    occurrences.append(Participant(**occurrence["content"]))
                 case "Identification":
                     occurrences.append(Identification(**occurrence["content"]))
                 case "Context":
@@ -402,6 +400,8 @@ class Moment:
                     occurrences.append(Resuming(**occurrence["content"]))
                 case "Working":
                     occurrences.append(Working(**occurrence["content"]))
+                case "Participant":
+                    occurrences.append(Participant(**occurrence["content"]))
 
         return id, occurrences
 
