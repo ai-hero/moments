@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="moments",
-    version="0.2.3",
+    version="0.2.4",
     author="Rahul Parundekar",
     author_email="rahul@aihero.studio",
     description="A Large Language Model-based agent framework with Moment Definition Language (MDL)",

@@ -180,7 +180,7 @@ class Motivation(Occurrence):
         return None
 
     def __str__(self) -> str:
-        return f'Motivation: "{self.content}"'
+        return f"Motivation: {self.content}"
 
 
 class Observation(Occurrence):
@@ -196,7 +196,7 @@ class Observation(Occurrence):
         return None
 
     def __str__(self) -> str:
-        return f'Observation: "{self.content}"\n'
+        return f"Observation: {self.content}\n"
 
 
 class Thought(Occurrence):
@@ -212,7 +212,7 @@ class Thought(Occurrence):
         return None
 
     def __str__(self) -> str:
-        return f'Thought: "{self.content}"'
+        return f"Thought: {self.content}"
 
 
 class Identification(Occurrence):
@@ -342,6 +342,102 @@ class Action(Occurrence):
         return f"Action: ```{yaml_content}```"
 
 
+class Chosen(Occurrence):
+    """The motivations or goals of the agent."""
+
+    def __init__(self: "Chosen", chosen: str):
+        super().__init__(chosen if chosen else "")
+
+    @staticmethod
+    def parse(line: str) -> Optional["Chosen"]:
+        if match := re.match(r"^Chosen:\s+\"(.+)\"$", line):
+            return Chosen(chosen=match.group(1))
+        return None
+
+    def __str__(self) -> str:
+        return f'Chosen: "{self.content}"'
+
+
+class Rejected(Occurrence):
+    """The motivations or goals of the agent."""
+
+    def __init__(self: "Rejected", rejected: str):
+        super().__init__(rejected if rejected else "")
+
+    @staticmethod
+    def parse(line: str) -> Optional["Rejected"]:
+        if match := re.match(r"^Rejected:\s+\"(.+)\"$", line):
+            return Rejected(rejected=match.group(1))
+        return None
+
+    def __str__(self) -> str:
+        return f'Rejected: "{self.content}"'
+
+
+class CritiqueRequest(Occurrence):
+    """The motivations or goals of the agent."""
+
+    def __init__(self: "CritiqueRequest", critique_request: str):
+        super().__init__(critique_request if critique_request else "")
+
+    @staticmethod
+    def parse(line: str) -> Optional["CritiqueRequest"]:
+        if match := re.match(r"^Critique Request:\s+(.+)$", line):
+            return CritiqueRequest(critique_request=match.group(1))
+        return None
+
+    def __str__(self) -> str:
+        return f'Critique Request: "{self.content}"'
+
+
+class Critique(Occurrence):
+    """The motivations or goals of the agent."""
+
+    def __init__(self: "Critique", critique: str):
+        super().__init__(critique if critique else "")
+
+    @staticmethod
+    def parse(line: str) -> Optional["Critique"]:
+        if match := re.match(r"^Critique:\s+(.+)$", line):
+            return Critique(critique=match.group(1))
+        return None
+
+    def __str__(self) -> str:
+        return f"Critique: {self.content}"
+
+
+class RevisionRequest(Occurrence):
+    """The motivations or goals of the agent."""
+
+    def __init__(self: "RevisionRequest", revision_request: str):
+        super().__init__(revision_request if revision_request else "")
+
+    @staticmethod
+    def parse(line: str) -> Optional["RevisionRequest"]:
+        if match := re.match(r"^Revision Request:\s+(.+)$", line):
+            return RevisionRequest(revision_request=match.group(1))
+        return None
+
+    def __str__(self) -> str:
+        return f"Revision Request: {self.content}"
+
+
+class Revision(Occurrence):
+    """The motivations or goals of the agent."""
+
+    def __init__(self: "Revision", revision: str):
+        super().__init__(revision if revision else "")
+
+    @staticmethod
+    def parse(line: str) -> Optional["Revision"]:
+        if match := re.match(r"^Revision:\s+\"(.+)\"$", line):
+            return Revision(revision=match.group(1))
+        return None
+
+    def __str__(self) -> str:
+        return f'Revision: "{self.content}"'
+
+
 class MomentParseException(Exception):
     pass
 
@@ -400,6 +496,18 @@ class Moment:
                     occurrences.append(Resuming(**occurrence["content"]))
                 case "Working":
                     occurrences.append(Working(**occurrence["content"]))
+                case "Chosen":
+                    occurrences.append(Chosen(**occurrence["content"]))
+                case "Rejected":
+                    occurrences.append(Rejected(**occurrence["content"]))
+                case "CritiqueRequest":
+                    occurrences.append(CritiqueRequest(**occurrence["content"]))
+                case "Critique":
+                    occurrences.append(Critique(**occurrence["content"]))
+                case "RevisionRequest":
+                    occurrences.append(RevisionRequest(**occurrence["content"]))
+                case "Revision":
+                    occurrences.append(Revision(**occurrence["content"]))
                 case "Participant":
                     occurrences.append(Participant(**occurrence["content"]))
 
@@ -428,13 +536,19 @@ class Moment:
                 Motivation,
                 Observation,
                 Self,
-                Participant,
                 Identification,
                 Context,
                 Action,
                 Waiting,
                 Resuming,
                 Working,
+                Chosen,
+                Rejected,
+                CritiqueRequest,
+                Critique,
+                RevisionRequest,
+                Revision,
+                Participant,
             ]
             for occurrence_class in occurrence_classes:
                 parsed_occurrence = occurrence_class.parse(line)

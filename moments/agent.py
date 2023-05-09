@@ -10,6 +10,7 @@ DEFAULT_NAME = "Leela"
 
 
 class AgentConfig:
+    mdl: str
     kind: str
     id: str
     variant: str
@@ -23,11 +24,13 @@ class AgentConfig:
     # pylint: disable=redefined-builtin
     def __init__(
         self: "AgentConfig",
+        mdl: str,
         kind: str,
         id: str,
         variant: str,
         init: dict,
     ):
+        self.mdl = mdl
         self.kind = kind
         self.id = id
         self.variant = variant
