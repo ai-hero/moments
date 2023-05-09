@@ -343,7 +343,7 @@ class Action(Occurrence):
 
 
 class Chosen(Occurrence):
-    """The motivations or goals of the agent."""
+    """The text chosen in the RLHF process."""
 
     def __init__(self: "Chosen", chosen: str):
         super().__init__(chosen if chosen else "")
@@ -359,7 +359,7 @@ class Chosen(Occurrence):
 
 
 class Rejected(Occurrence):
-    """The motivations or goals of the agent."""
+    """The text rejected in the RLHF process."""
 
     def __init__(self: "Rejected", rejected: str):
         super().__init__(rejected if rejected else "")
@@ -375,7 +375,7 @@ class Rejected(Occurrence):
 
 
 class CritiqueRequest(Occurrence):
-    """The motivations or goals of the agent."""
+    """The critique request to an RLAIF agent."""
 
     def __init__(self: "CritiqueRequest", critique_request: str):
         super().__init__(critique_request if critique_request else "")
@@ -391,7 +391,7 @@ class CritiqueRequest(Occurrence):
 
 
 class Critique(Occurrence):
-    """The motivations or goals of the agent."""
+    """The critique by an RLAIF agent."""
 
     def __init__(self: "Critique", critique: str):
         super().__init__(critique if critique else "")
@@ -407,7 +407,7 @@ class Critique(Occurrence):
 
 
 class RevisionRequest(Occurrence):
-    """The motivations or goals of the agent."""
+    """The revision request to an RLAIF agent."""
 
     def __init__(self: "RevisionRequest", revision_request: str):
         super().__init__(revision_request if revision_request else "")
@@ -423,7 +423,7 @@ class RevisionRequest(Occurrence):
 
 
 class Revision(Occurrence):
-    """The motivations or goals of the agent."""
+    """The revision by an RLAIF agent."""
 
     def __init__(self: "Revision", revision: str):
         super().__init__(revision if revision else "")
