@@ -1,0 +1,27 @@
+Moment         = Occurrences
+Occurrences    = Occurrence*
+Occurrence     = Instructions / Example / Begin / Context / Self / Participant / Identification
+Instructions   = 'Instructions:' ws+ string newline
+Example        = 'Example:' ws+ title '-' ws+ "'''" tqs_content "'''" newline
+Begin          = 'Begin.' newline
+Context        = 'Context:' ws+ '```' ct_content '```' newline
+Self           = 'Self:' ws+ Emotion? says_string newline
+Participant    = participant ws+ Identifier ws*':' ws+ Emotion? says_string newline
+Identification = 'Identification:' ws+ participant ws+ Identifier ws+ 'is now' ws+ participant ws+ Identifier newline
+
+Emotion        = '(' ~r'[^\)]*' ')' ws+
+Identifier     = '(' id ')'
+ct_content     = ~r'(?:[^`]|`[^`]|``[^`])*'
+tqs_content    = ~r"(?:[^']|'[^']|''[^'])*"
+says_string    = q_string / tq_string
+q_string       = '"' q_content '"'
+tq_string      = '"""' tq_content '"""'
+q_content      = ~r'(?:[^"\\]|\\["\\n])*'
+tq_content     = ~r'(?:[^"]|"{1,2})*'
+string         = ~r'[^\n]+'
+title          = ~r'[^\-]+'
+id             = number / 'unidentified' / 'unknown'
+participant    = ~r'[^ \t]+'
+number         = ~r'[0-9]+'
+ws             = ~r'[ \t]'
+newline        = ~r'[\r\n]+' / ~r'$'

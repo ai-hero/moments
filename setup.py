@@ -28,6 +28,6 @@ setuptools.setup(
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
     packages=setuptools.find_packages(),
-    install_requires=[],
+    install_requires=["parsimonious"],
     python_requires=">=3.10",
 )

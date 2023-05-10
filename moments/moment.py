@@ -3,6 +3,12 @@ import yaml
 from abc import ABCMeta, abstractmethod
 from typing import Any, Type, Union, Tuple, Optional
 from copy import deepcopy
+from parsimonious.grammar import Grammar
+from pathlib import Path
+
+p = Path(__file__).with_name("grammar.peg")
+with p.open("r") as f:
+    GRAMMAR = Grammar(f.read())
 
 # Define the main Occurrence class
 class Occurrence(metaclass=ABCMeta):
