@@ -485,7 +485,7 @@ class Moment:
                 case "Working":
                     occurrences.append(Working(**occurrence["content"]))
                 case "Rejected":
-                    occurrences.append(Rejected(occurrence["content"]))
+                    occurrences.append(Rejected(**occurrence["content"]))
                 case "CritiqueRequest":
                     occurrences.append(CritiqueRequest(occurrence["content"]))
                 case "Critique":
@@ -493,9 +493,9 @@ class Moment:
                 case "RevisionRequest":
                     occurrences.append(RevisionRequest(occurrence["content"]))
                 case "Revision":
-                    occurrences.append(Revision(occurrence["content"]))
+                    occurrences.append(Revision(**occurrence["content"]))
                 case "Participant":
-                    occurrences.append(Participant(occurrence["content"]))
+                    occurrences.append(Participant(**occurrence["content"]))
 
         return id, occurrences
 
