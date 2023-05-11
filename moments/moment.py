@@ -342,36 +342,24 @@ class Action(Occurrence):
         return f"Action: ```{yaml_content}```"
 
 
-class Chosen(Occurrence):
-    """The text chosen in the RLHF process."""
-
-    def __init__(self: "Chosen", chosen: str):
-        super().__init__(chosen if chosen else "")
-
-    @staticmethod
-    def parse(line: str) -> Optional["Chosen"]:
-        if match := re.match(r"^Chosen:\s+\"(.+)\"$", line):
-            return Chosen(chosen=match.group(1))
-        return None
-
-    def __str__(self) -> str:
-        return f'Chosen: "{self.content}"'
-
-
 class Rejected(Occurrence):
     """The text rejected in the RLHF process."""
 
-    def __init__(self: "Rejected", rejected: str):
-        super().__init__(rejected if rejected else "")
+    def __init__(self: "Rejected", emotion: str, says: str):
+        super().__init__(
+            {"emotion": emotion if emotion else "", "says": says if says else ""}
+        )
 
     @staticmethod
     def parse(line: str) -> Optional["Rejected"]:
-        if match := re.match(r"^Rejected:\s+\"(.+)\"$", line):
-            return Rejected(rejected=match.group(1))
+        if match := re.match(r"^Rejected:\s+(\((.*)\)\s+)?\"(.+)\"$", line):
+            return Rejected(emotion=match.group(2), says=match.group(3))
         return None
 
     def __str__(self) -> str:
-        return f'Rejected: "{self.content}"'
+        emotion, says = self.content["emotion"], self.content["says"]
+        emotion_str = f"({emotion} " if emotion else ""
+        return f'Rejected: {emotion_str}"{says}"'
 
 
 class CritiqueRequest(Occurrence):
@@ -496,20 +484,18 @@ class Moment:
                     occurrences.append(Resuming(**occurrence["content"]))
                 case "Working":
                     occurrences.append(Working(**occurrence["content"]))
-                case "Chosen":
-                    occurrences.append(Chosen(**occurrence["content"]))
                 case "Rejected":
-                    occurrences.append(Rejected(**occurrence["content"]))
+                    occurrences.append(Rejected(occurrence["content"]))
                 case "CritiqueRequest":
-                    occurrences.append(CritiqueRequest(**occurrence["content"]))
+                    occurrences.append(CritiqueRequest(occurrence["content"]))
                 case "Critique":
-                    occurrences.append(Critique(**occurrence["content"]))
+                    occurrences.append(Critique(occurrence["content"]))
                 case "RevisionRequest":
-                    occurrences.append(RevisionRequest(**occurrence["content"]))
+                    occurrences.append(RevisionRequest(occurrence["content"]))
                 case "Revision":
-                    occurrences.append(Revision(**occurrence["content"]))
+                    occurrences.append(Revision(occurrence["content"]))
                 case "Participant":
-                    occurrences.append(Participant(**occurrence["content"]))
+                    occurrences.append(Participant(occurrence["content"]))
 
         return id, occurrences
 
@@ -542,7 +528,6 @@ class Moment:
                 Waiting,
                 Resuming,
                 Working,
-                Chosen,
                 Rejected,
                 CritiqueRequest,
                 Critique,
