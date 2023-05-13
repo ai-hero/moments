@@ -14,7 +14,7 @@ class AgentConfig:
     kind: str
     id: str
     variant: str
-    init: dict
+    init: str
 
     @staticmethod
     def from_file(config_file: str) -> "AgentConfig":
@@ -28,7 +28,7 @@ class AgentConfig:
         kind: str,
         id: str,
         variant: str,
-        init: dict,
+        init: str,
     ):
         self.mdl = mdl
         self.kind = kind
