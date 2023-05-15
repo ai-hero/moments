@@ -1,11 +1,23 @@
 Moment         = Occurrences
 Occurrences    = Occurrence*
-Occurrence     = Instructions / Example / Begin / Context / Self / Participant / Identification
+Occurrence     = Instructions / Example / Begin / Context / Self / Participant / Identification / Rejected / Thought / Motivation / Observation / Waiting / Resuming / Working / Action / CritiqueRequest / Critique / RevisionRequest / Revision
 Instructions   = 'Instructions:' ws+ string newline
 Example        = 'Example:' ws+ title '-' ws+ "'''" tqs_content "'''" newline
 Begin          = 'Begin.' newline
 Context        = 'Context:' ws+ '```' ct_content '```' newline
 Self           = 'Self:' ws+ Emotion? says_string newline
+Rejected       = 'Rejected:' ws+ Emotion? says_string newline
+Thought        = 'Thought:' says_string newline
+Motivation     = 'Motivation:' string newline
+Observation    = 'Observation:' string newline
+Waiting        = 'Waiting:' ws+ '```' ct_content '```' newline
+Resuming       = 'Resuming:' ws+ '```' ct_content '```' newline
+Working        = 'Working:' ws+ '```' ct_content '```' newline
+Action         = 'Action:' ws+ '```' ct_content '```' newline
+CritiqueRequest= 'CritiqueRequest:' string newline
+Critique       = 'Critique:' string newline
+RevisionRequest= 'RevisionRequest:' string newline
+Revision       = 'Revision:' says_string newline
 Participant    = participant ws+ Identifier ws*':' ws+ Emotion? says_string newline
 Identification = 'Identification:' ws+ participant ws+ Identifier ws+ 'is now' ws+ participant ws+ Identifier newline
 

@@ -7,8 +7,9 @@ from parsimonious.grammar import Grammar
 from pathlib import Path
 
 p = Path(__file__).with_name("grammar.peg")
-with p.open("r") as f:
+with p.open("r", encoding="utf-8") as f:
     GRAMMAR = Grammar(f.read())
+
 
 # Define the main Occurrence class
 class Occurrence(metaclass=ABCMeta):
@@ -460,48 +461,48 @@ class Moment:
     @classmethod
     def _parse_dict(cls, moment: dict) -> Tuple[str, list[Occurrence]]:
         id = moment["id"]
+
         occurrences: list[Occurrence] = []
         for occurrence in moment["occurrences"]:
             kind = occurrence.pop("kind", None)
-            match kind:
-                case "Instructions":
-                    occurrences.append(Instructions(occurrence["content"]))
-                case "Example":
-                    occurrences.append(Example(**occurrence["content"]))
-                case "Begin":
-                    occurrences.append(Begin())
-                case "Thought":
-                    occurrences.append(Thought(occurrence["content"]))
-                case "Motivation":
-                    occurrences.append(Motivation(occurrence["content"]))
-                case "Observation":
-                    occurrences.append(Observation(occurrence["content"]))
-                case "Self":
-                    occurrences.append(Self(**occurrence["content"]))
-                case "Identification":
-                    occurrences.append(Identification(**occurrence["content"]))
-                case "Context":
-                    occurrences.append(Context(occurrence["content"]))
-                case "Action":
-                    occurrences.append(Action(**occurrence["content"]))
-                case "Waiting":
-                    occurrences.append(Waiting(**occurrence["content"]))
-                case "Resuming":
-                    occurrences.append(Resuming(**occurrence["content"]))
-                case "Working":
-                    occurrences.append(Working(**occurrence["content"]))
-                case "Rejected":
-                    occurrences.append(Rejected(**occurrence["content"]))
-                case "CritiqueRequest":
-                    occurrences.append(CritiqueRequest(occurrence["content"]))
-                case "Critique":
-                    occurrences.append(Critique(occurrence["content"]))
-                case "RevisionRequest":
-                    occurrences.append(RevisionRequest(occurrence["content"]))
-                case "Revision":
-                    occurrences.append(Revision(**occurrence["content"]))
-                case "Participant":
-                    occurrences.append(Participant(**occurrence["content"]))
+            if kind == "Instructions":
+                occurrences.append(Instructions(occurrence["content"]))
+            elif kind == "Example":
+                occurrences.append(Example(**occurrence["content"]))
+            elif kind == "Begin":
+                occurrences.append(Begin())
+            elif kind == "Thought":
+                occurrences.append(Thought(occurrence["content"]))
+            elif kind == "Motivation":
+                occurrences.append(Motivation(occurrence["content"]))
+            elif kind == "Observation":
+                occurrences.append(Observation(occurrence["content"]))
+            elif kind == "Self":
+                occurrences.append(Self(**occurrence["content"]))
+            elif kind == "Identification":
+                occurrences.append(Identification(**occurrence["content"]))
+            elif kind == "Context":
+                occurrences.append(Context(occurrence["content"]))
+            elif kind == "Action":
+                occurrences.append(Action(**occurrence["content"]))
+            elif kind == "Waiting":
+                occurrences.append(Waiting(**occurrence["content"]))
+            elif kind == "Resuming":
+                occurrences.append(Resuming(**occurrence["content"]))
+            elif kind == "Working":
+                occurrences.append(Working(**occurrence["content"]))
+            elif kind == "Rejected":
+                occurrences.append(Rejected(**occurrence["content"]))
+            elif kind == "CritiqueRequest":
+                occurrences.append(CritiqueRequest(occurrence["content"]))
+            elif kind == "Critique":
+                occurrences.append(Critique(occurrence["content"]))
+            elif kind == "RevisionRequest":
+                occurrences.append(RevisionRequest(occurrence["content"]))
+            elif kind == "Revision":
+                occurrences.append(Revision(**occurrence["content"]))
+            elif kind == "Participant":
+                occurrences.append(Participant(**occurrence["content"]))
 
         return id, occurrences
 
