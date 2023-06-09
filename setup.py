@@ -26,6 +26,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Topic :: Software Development :: Libraries",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
@@ -37,6 +38,6 @@ setuptools.setup(
         "types-pyyaml",
         "pytest",
     ],
-    python_requires=">=3.9",
+    python_requires=">=3.8",
     package_data={"": ["**/*.peg"]},
 )
