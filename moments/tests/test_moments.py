@@ -1,4 +1,5 @@
 import pytest
+import difflib
 from glob import glob
 from moments.moment import Moment
 from pathlib import Path
@@ -16,7 +17,13 @@ def get_mdls():
 
 class TestMoments:
     @pytest.mark.parametrize("mdl", get_mdls())
-    def test_good(self, mdl):
+    def test_good(self, mdl: str):
         parsed = Moment.parse(mdl)
         assert parsed is not None
-        print(len(mdl), len(parsed))
+        the_difference = difflib.unified_diff(mdl.split("\n"), str(parsed).split("\n"))
+        has_difference = False
+        for text in the_difference:
+            if text[:3] not in ("+++", "---", "@@ "):
+                print(text)
+                has_difference = True
+        assert has_difference is False

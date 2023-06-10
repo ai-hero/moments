@@ -42,7 +42,7 @@ class Instructions(Occurrence):
         super().__init__(instructions if instructions else "")
 
     def __str__(self) -> str:
-        return f'Instructions: """{self.content}"""'
+        return f"Instructions: '''{self.content}'''"
 
 
 class Example(Occurrence):
@@ -76,7 +76,7 @@ class Context(Occurrence):
 
     def __str__(self) -> str:
         yaml_content = yaml.dump(self.content, default_flow_style=False).strip()
-        return f"Context: ```{yaml_content}```"
+        return f"Context: ```\n{yaml_content}\n```"
 
 
 class Self(Occurrence):
@@ -288,7 +288,7 @@ def walk(node, occurrences: List[Occurrence]):
     if node.expr_name == "Instructions":
         instructions = ""
         for child in node.children:
-            if child.expr_name == "string":
+            if child.expr_name == "tqs_content":
                 instructions = child.text
         occurrences.append(Instructions(instructions))
     elif node.expr_name == "Example":
@@ -296,7 +296,7 @@ def walk(node, occurrences: List[Occurrence]):
         example = ""
         for child in node.children:
             if child.expr_name == "title":
-                title = child.text
+                title = child.text.strip()
             elif child.expr_name == "tqs_content":
                 example = child.text
         occurrences.append(Example(title, example))
@@ -478,17 +478,17 @@ def walk(node, occurrences: List[Occurrence]):
                                 emotion = emotion_child.text
         occurrences.append(Participant(participant, emotion, says))
     elif node.expr_name == "Identification":
-        participant = ""
+        kind = ""
         name = ""
         for child in node.children:
-            if child.expr_name == "participant":
-                participant = child.text
+            if child.expr_name == "kind":
+                kind = child.text
             elif child.expr_name == "name":
                 name_node = child
                 for name_child in name_node.children:
                     if name_child.expr_name == "name_content":
                         name = name_child.text
-        occurrences.append(Identification(participant, name))
+        occurrences.append(Identification(kind, name))
     elif node.expr_name.strip():
         assert node.expr_name in ["Occurrence", "Occurrences"]
         for child in node.children:
