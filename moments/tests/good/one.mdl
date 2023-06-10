@@ -4,10 +4,10 @@ Context: ```
     time: "8:01am"
 ```
 Self: (😊) "Good morning! Welcome to In Search Of Ikigai. What can I get you?"
-Customer (unknown): "Can I get a cup of coffee please?"
-Self: "Definitely. What kind of coffee would you like?"
-Customer (unknown): "A single shot espresso, please."
+Customer: "Can I get a cup of coffee please?"
+Self: (smiling) "Definitely. What kind of coffee would you like?"
+Customer: "A single shot espresso, please."
 Self: "Sure. May I have a name for the order?"
-Customer (unknown): "John."
-Identification: Customer (unknown) is now John (unidentified)
+Customer: "John."
+Identification: Customer is called "John".
 Self: "Alright John, your order should be up shortly."

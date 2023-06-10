@@ -89,8 +89,10 @@ class Self(Occurrence):
 
     def __str__(self) -> str:
         emotion, says = self.content["emotion"], self.content["says"]
-        emotion_str = f"({emotion})" if emotion else ""
-        return f'Self: {emotion_str} """{says}"""'
+        emotion_str = f"({emotion}) " if emotion else ""
+        says = says.replace('"', '\\"')
+        says_str = f'"""{says}"""' if "\n" in says else f'"{says}"'
+        return f"Self: {emotion_str}{says_str}"
 
 
 class Participant(Occurrence):
@@ -102,27 +104,25 @@ class Participant(Occurrence):
     says - what they are saying
     """
 
-    def __init__(
-        self: "Participant", name: str, identifier: str, emotion: str, says: str
-    ):
+    def __init__(self: "Participant", name: str, emotion: str, says: str):
         super().__init__(
             {
                 "name": name if name else "",
-                "identifier": identifier if identifier else "",
                 "emotion": emotion if emotion else "",
                 "says": says if says else "",
             }
         )
 
     def __str__(self) -> str:
-        name, identifier, emotion, says = (
+        name, emotion, says = (
             self.content["name"],
-            self.content["identifier"],
             self.content["emotion"],
             self.content["says"],
         )
-        emotion_str = f"({emotion})" if emotion else ""
-        return f'{name} ({identifier}): {emotion_str} """{says}"""'
+        emotion_str = f"({emotion}) " if emotion else ""
+        says = says.replace('"', '\\"')
+        says_str = f'"""{says}"""' if "\n" in says else f'"{says}"'
+        return f"{name}: {emotion_str}{says_str}"
 
 
 class Motivation(Occurrence):
@@ -161,33 +161,12 @@ class Identification(Occurrence):
     Includes old name and id, and new name and id. May include the kind=human/agent
     """
 
-    def __init__(
-        self: "Identification",
-        old_name: str,
-        old_id: str,
-        new_name: str,
-        new_id: str,
-        kind: str,
-    ):
-        super().__init__(
-            {
-                "old_name": old_name if old_name else "",
-                "old_id": old_id if old_id else "",
-                "new_name": new_name if new_name else "",
-                "new_id": new_id if new_id else "",
-                "kind": kind if kind else "",
-            }
-        )
+    def __init__(self: "Identification", kind: str, name: str):
+        super().__init__({"kind": kind if kind else "", "name": name if name else ""})
 
     def __str__(self) -> str:
-        old_name, old_id, new_name, new_id, kind = (
-            self.content["old_name"],
-            self.content["old_id"],
-            self.content["new_name"],
-            self.content["new_id"],
-            self.content["kind"],
-        )
-        return f"Identification: {old_name} ({old_id}) is now {new_name} ({new_id}) [{kind}]."
+        kind, name = (self.content["kind"], self.content["name"])
+        return f'Identification: {kind} is called "{name}".'
 
 
 class Waiting(Occurrence):
@@ -249,8 +228,10 @@ class Rejected(Occurrence):
 
     def __str__(self) -> str:
         emotion, says = self.content["emotion"], self.content["says"]
-        emotion_str = f"({emotion})" if emotion else ""
-        return f'Rejected: {emotion_str} """{says}"""'
+        emotion_str = f"({emotion}) " if emotion else ""
+        says = says.replace('"', '\\"')
+        says_str = f'"""{says}"""' if "\n" in says else f'"{says}"'
+        return f"Rejected: {emotion_str}{says_str}"
 
 
 class CritiqueRequest(Occurrence):
@@ -293,8 +274,10 @@ class Revision(Occurrence):
 
     def __str__(self) -> str:
         emotion, says = self.content["emotion"], self.content["says"]
-        emotion_str = f"({emotion})" if emotion else ""
-        return f'Revision: {emotion_str} """{says}"""'
+        emotion_str = f"({emotion}) " if emotion else ""
+        says = says.replace('"', '\\"')
+        says_str = f'"""{says}"""' if "\n" in says else f'"{says}"'
+        return f"Revision: {emotion_str}{says_str}"
 
 
 class MomentParseException(Exception):
@@ -327,28 +310,67 @@ def walk(node, occurrences: List[Occurrence]):
         occurrences.append(Context(yaml_content))
     elif node.expr_name == "Self":
         emotion = ""
-        says_string = ""
-        for child in node.children:
-            if child.expr_name == "emotion":
-                emotion = child.text
-            elif child.expr_name == "says_string":
-                says_string = child.text
-        occurrences.append(Self(emotion, says_string))
-    elif node.expr_name == "Rejected":
-        emotion = ""
-        says_string = ""
-        for child in node.children:
-            if child.expr_name == "emotion":
-                emotion = child.text
-            elif child.expr_name == "says_string":
-                says_string = child.text
-        occurrences.append(Rejected(emotion, says=says_string))
-    elif node.expr_name == "Thought":
-        says_string = ""
+        says = ""
         for child in node.children:
             if child.expr_name == "says_string":
-                says_string = child.text
-        occurrences.append(Thought(thought=says_string))
+                says_node = child
+                for says_child in says_node.children:
+                    if says_child.expr_name == "q_string":
+                        for content_child in says_child.children:
+                            if content_child.expr_name == "q_content":
+                                says = content_child.text
+                    elif says_child.expr_name == "tq_string":
+                        for content_child in says_child.children:
+                            if content_child.expr_name == "tq_content":
+                                says = content_child.text
+            elif child.text.strip():
+                other_node = child
+                for other_child in other_node.children:
+                    if other_child.expr_name == "emotion":
+                        emotion_node = other_child
+                        for emotion_child in emotion_node.children:
+                            if emotion_child.expr_name == "emotion_content":
+                                emotion = emotion_child.text
+        occurrences.append(Self(emotion, says))
+    elif node.expr_name == "Rejected":
+        emotion = ""
+        says = ""
+        for child in node.children:
+            if child.expr_name == "says_string":
+                says_node = child
+                for says_child in says_node.children:
+                    if says_child.expr_name == "q_string":
+                        for content_child in says_child.children:
+                            if content_child.expr_name == "q_content":
+                                says = content_child.text
+                    elif says_child.expr_name == "tq_string":
+                        for content_child in says_child.children:
+                            if content_child.expr_name == "tq_content":
+                                says = content_child.text
+            elif child.text.strip():
+                other_node = child
+                for other_child in other_node.children:
+                    if other_child.expr_name == "emotion":
+                        emotion_node = other_child
+                        for emotion_child in emotion_node.children:
+                            if emotion_child.expr_name == "emotion_content":
+                                emotion = emotion_child.text
+        occurrences.append(Rejected(emotion, says=says))
+    elif node.expr_name == "Thought":
+        says = ""
+        for child in node.children:
+            if child.expr_name == "says_string":
+                says_node = child
+                for says_child in says_node.children:
+                    if says_child.expr_name == "q_string":
+                        for content_child in says_child.children:
+                            if content_child.expr_name == "q_content":
+                                says = content_child.text
+                    elif says_child.expr_name == "tq_string":
+                        for content_child in says_child.children:
+                            if content_child.expr_name == "tq_content":
+                                says = content_child.text
+        occurrences.append(Thought(thought=says))
     elif node.expr_name == "Motivation":
         motivation = ""
         for child in node.children:
@@ -405,48 +427,68 @@ def walk(node, occurrences: List[Occurrence]):
         occurrences.append(RevisionRequest(revision_request=string))
     elif node.expr_name == "Revision":
         emotion = ""
-        says_string = ""
+        says = ""
         for child in node.children:
-            if child.expr_name == "emotion":
-                emotion = child.text
-            elif child.expr_name == "says_string":
-                says_string = child.text
-        occurrences.append(Revision(emotion, says_string))
+            if child.expr_name == "says_string":
+                says_node = child
+                for says_child in says_node.children:
+                    if says_child.expr_name == "q_string":
+                        for content_child in says_child.children:
+                            if content_child.expr_name == "q_content":
+                                says = content_child.text
+                    elif says_child.expr_name == "tq_string":
+                        for content_child in says_child.children:
+                            if content_child.expr_name == "tq_content":
+                                says = content_child.text
+            elif child.text.strip():
+                other_node = child
+                for other_child in other_node.children:
+                    if other_child.expr_name == "emotion":
+                        emotion_node = other_child
+                        for emotion_child in emotion_node.children:
+                            if emotion_child.expr_name == "emotion_content":
+                                emotion = emotion_child.text
+        occurrences.append(Revision(emotion, says))
     elif node.expr_name == "Participant":
         participant = ""
         identifier = ""
         emotion = ""
-        says_string = ""
+        says = ""
         for child in node.children:
             if child.expr_name == "participant":
                 participant = child.text
-            elif child.expr_name == "identifier":
-                identifier = child.text
-            elif child.expr_name == "emotion":
-                emotion = child.text
             elif child.expr_name == "says_string":
-                says_string = child.text
-        occurrences.append(Participant(participant, identifier, emotion, says_string))
+                says_node = child
+                for says_child in says_node.children:
+                    if says_child.expr_name == "q_string":
+                        for content_child in says_child.children:
+                            if content_child.expr_name == "q_content":
+                                says = content_child.text
+                    elif says_child.expr_name == "tq_string":
+                        for content_child in says_child.children:
+                            if content_child.expr_name == "tq_content":
+                                says = content_child.text
+            elif child.text.strip():
+                other_node = child
+                for other_child in other_node.children:
+                    if other_child.expr_name == "emotion":
+                        emotion_node = other_child
+                        for emotion_child in emotion_node.children:
+                            if emotion_child.expr_name == "emotion_content":
+                                emotion = emotion_child.text
+        occurrences.append(Participant(participant, emotion, says))
     elif node.expr_name == "Identification":
         participant = ""
-        identifier = ""
-        participant_2 = ""
-        identifier_2 = ""
-        kind = ""
+        name = ""
         for child in node.children:
             if child.expr_name == "participant":
                 participant = child.text
-            elif child.expr_name == "identifier":
-                identifier = child.text
-            elif child.expr_name == "participant2":
-                participant_2 = child.text
-            elif child.expr_name == "identifier2":
-                identifier_2 = child.text
-            elif child.expr_name == "kind":
-                kind = child.text
-        occurrences.append(
-            Identification(participant, identifier, participant_2, identifier_2, kind)
-        )
+            elif child.expr_name == "name":
+                name_node = child
+                for name_child in name_node.children:
+                    if name_child.expr_name == "name_content":
+                        name = name_child.text
+        occurrences.append(Identification(participant, name))
     elif node.expr_name.strip():
         assert node.expr_name in ["Occurrence", "Occurrences"]
         for child in node.children:

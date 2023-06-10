@@ -4,13 +4,13 @@ Example: An example interaction with a customer - '''
     time: "8:01am"
   ```
   Self: "Good morning! Welcome to ISO Ikigai cafe."
-  Customer (unknown): "Hello."
+  Customer: "Hello."
   Self: (smile) "What can I get you?"
-  Customer (unknown): "Can I get a cup of coffee please?"
+  Customer: "Can I get a cup of coffee please?"
   Self: "Sure. How would you like it?"
-  Customer (unknown): "Black, no sugar please."
+  Customer: "Black, no sugar please."
   Self: "What size would that be?"
-  Customer (unknown): "8 oz."
+  Customer: "8 oz."
   Self: "Great! We'll let you know when your order is ready".
 '''
 Begin.
@@ -18,12 +18,12 @@ Context: ```
     time: "8:01am"
 ```
 Self: (😊) "Good morning! Welcome to In Search Of Ikigai. What can I get you?"
-Customer (unknown): "Can I get a cup of coffee please?"
+Customer: "Can I get a cup of coffee please?"
 Self: "Definitely. What kind of coffee would you like?"
-Customer (unknown): "A single shot espresso, please.
+Customer: """A single shot espresso, please.
 Also, could you make it a medium roast?
-"
+"""
 Self: "Sure. May I have a name for the order?"
-Customer (unknown): "John."
-Identification: Customer (unknown) is now John (unidentified)
+Customer: "John."
+Identification: Customer is called "John".
 Self: "Alright John, your order should be up shortly."
