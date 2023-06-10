@@ -19,4 +19,4 @@ class TestMoments:
     def test_good(self, mdl):
         parsed = Moment.parse(mdl)
         assert parsed is not None
-        print(parsed)
+        print(len(mdl), len(parsed))
