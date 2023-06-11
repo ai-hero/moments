@@ -1,8 +1,15 @@
-import re
-import yaml
-from abc import ABCMeta, abstractmethod
-from typing import Any, Type, Union, Tuple, Optional
+from abc import ABCMeta
 from copy import deepcopy
+from pathlib import Path
+from typing import Any, Dict, List, Tuple, Type, Union
+
+import yaml
+from parsimonious.grammar import Grammar
+
+p = Path(__file__).with_name("moments_grammar.peg")
+with p.open("r", encoding="utf-8") as f:
+    GRAMMAR = Grammar(f.read())
+
 
 # Define the main Occurrence class
 class Occurrence(metaclass=ABCMeta):
@@ -13,11 +20,6 @@ class Occurrence(metaclass=ABCMeta):
 
     def __repr__(self: "Occurrence"):
         return f"<{self.__class__.__name__} content={self.content}>"
-
-    @staticmethod
-    @abstractmethod
-    def parse(line: str) -> Optional["Occurrence"]:
-        pass
 
     def __str__(self: "Occurrence") -> str:
         raise NotImplementedError()
@@ -38,14 +40,8 @@ class Instructions(Occurrence):
     def __init__(self: "Instructions", instructions: str):
         super().__init__(instructions if instructions else "")
 
-    @staticmethod
-    def parse(line: str) -> Optional["Instructions"]:
-        if match := re.match(r"^Instructions:\s+(.+)$", line):
-            return Instructions(instructions=match.group(1))
-        return None
-
     def __str__(self) -> str:
-        return f'Instructions: "{self.content}"'
+        return f"Instructions: '''{self.content}'''"
 
 
 class Example(Occurrence):
@@ -55,12 +51,6 @@ class Example(Occurrence):
         super().__init__(
             {"title": title if title else "", "example": example if example else ""}
         )
-
-    @staticmethod
-    def parse(line: str) -> Optional["Example"]:
-        if match := re.match(r"^Example:\s+(.+)\s+-\s+'''(.+)'''$", line):
-            return Example(title=match.group(1), example=match.group(2))
-        return None
 
     def __str__(self) -> str:
         title, example = (self.content["title"], self.content["example"])
@@ -73,32 +63,19 @@ class Begin(Occurrence):
     def __init__(self: "Begin"):
         super().__init__("")
 
-    @staticmethod
-    def parse(line: str) -> Optional["Begin"]:
-        if line.startswith("Begin."):
-            return Begin()
-        return None
-
     def __str__(self) -> str:
-        return "Begin.\n\n"
+        return "Begin."
 
 
 class Context(Occurrence):
     """An additional context that may be injected through code. It's a yaml representation of a dict."""
 
-    def __init__(self: "Context", context: str):
-        super().__init__(context if context else "")
-
-    @staticmethod
-    def parse(line: str) -> Optional["Context"]:
-        if match := re.match(r"^Context:\s+```(.+?)```$", line):
-            yaml_content = yaml.safe_load(match.group(1))
-            return Context(context=yaml_content)
-        return None
+    def __init__(self: "Context", context: Dict[Any, Any]):
+        super().__init__(context if context else {})
 
     def __str__(self) -> str:
         yaml_content = yaml.dump(self.content, default_flow_style=False).strip()
-        return f"Context: ```{yaml_content}```"
+        return f"Context: ```\n{yaml_content}\n```"
 
 
 class Self(Occurrence):
@@ -109,16 +86,12 @@ class Self(Occurrence):
             {"emotion": emotion if emotion else "", "says": says if says else ""}
         )
 
-    @staticmethod
-    def parse(line: str) -> Optional["Self"]:
-        if match := re.match(r"^Self:\s+(\((.*)\)\s+)?\"(.+)\"$", line):
-            return Self(emotion=match.group(2), says=match.group(3))
-        return None
-
     def __str__(self) -> str:
         emotion, says = self.content["emotion"], self.content["says"]
-        emotion_str = f"({emotion} " if emotion else ""
-        return f'Self: {emotion_str}"{says}"'
+        emotion_str = f"({emotion}) " if emotion else ""
+        says = says.replace('"', '\\"')
+        says_str = f'"""{says}"""' if "\n" in says else f'"{says}"'
+        return f"Self: {emotion_str}{says_str}"
 
 
 class Participant(Occurrence):
@@ -130,41 +103,25 @@ class Participant(Occurrence):
     says - what they are saying
     """
 
-    def __init__(
-        self: "Participant", name: str, identifier: str, emotion: str, says: str
-    ):
+    def __init__(self: "Participant", name: str, emotion: str, says: str):
         super().__init__(
             {
                 "name": name if name else "",
-                "identifier": identifier if identifier else "",
                 "emotion": emotion if emotion else "",
                 "says": says if says else "",
             }
         )
 
-    @staticmethod
-    def parse(line: str) -> Optional["Participant"]:
-        if match := re.match(
-            r"^(.+)\s+\((\d+|unidentified|unknown)\):\s+(\((.*)\)\s+)?\"(.+)\"$",
-            line,
-        ):
-            return Participant(
-                name=match.group(1),
-                identifier=match.group(2),
-                emotion=match.group(4),
-                says=match.group(5),
-            )
-        return None
-
     def __str__(self) -> str:
-        name, identifier, emotion, says = (
+        name, emotion, says = (
             self.content["name"],
-            self.content["identifier"],
             self.content["emotion"],
             self.content["says"],
         )
-        emotion_str = f"({emotion} " if emotion else ""
-        return f'{name} ({identifier}): {emotion_str}"{says}"'
+        emotion_str = f"({emotion}) " if emotion else ""
+        says = says.replace('"', '\\"')
+        says_str = f'"""{says}"""' if "\n" in says else f'"{says}"'
+        return f"{name}: {emotion_str}{says_str}"
 
 
 class Motivation(Occurrence):
@@ -172,12 +129,6 @@ class Motivation(Occurrence):
 
     def __init__(self: "Motivation", motivation: str):
         super().__init__(motivation if motivation else "")
-
-    @staticmethod
-    def parse(line: str) -> Optional["Motivation"]:
-        if match := re.match(r"^Motivation:\s+(.+)$", line):
-            return Motivation(motivation=match.group(1))
-        return None
 
     def __str__(self) -> str:
         return f"Motivation: {self.content}"
@@ -189,12 +140,6 @@ class Observation(Occurrence):
     def __init__(self: "Observation", observation: str):
         super().__init__(observation if observation else "")
 
-    @staticmethod
-    def parse(line: str) -> Optional["Observation"]:
-        if match := re.match(r"^Observation:\s+(.+)$", line):
-            return Observation(observation=match.group(1))
-        return None
-
     def __str__(self) -> str:
         return f"Observation: {self.content}\n"
 
@@ -205,14 +150,8 @@ class Thought(Occurrence):
     def __init__(self: "Thought", thought: str):
         super().__init__(thought if thought else "")
 
-    @staticmethod
-    def parse(line: str) -> Optional["Thought"]:
-        if match := re.match(r"^Thought:\s+(.+)$", line):
-            return Thought(thought=match.group(1))
-        return None
-
     def __str__(self) -> str:
-        return f"Thought: {self.content}"
+        return f'Thought: """{self.content}"""'
 
 
 class Identification(Occurrence):
@@ -221,48 +160,12 @@ class Identification(Occurrence):
     Includes old name and id, and new name and id. May include the kind=human/agent
     """
 
-    def __init__(
-        self: "Identification",
-        old_name: str,
-        old_id: str,
-        new_name: str,
-        new_id: str,
-        kind: str,
-    ):
-        super().__init__(
-            {
-                "old_name": old_name if old_name else "",
-                "old_id": old_id if old_id else "",
-                "new_name": new_name if new_name else "",
-                "new_id": new_id if new_id else "",
-                "kind": kind if kind else "",
-            }
-        )
-
-    @staticmethod
-    def parse(line: str) -> Optional["Identification"]:
-        if match := re.match(
-            r"^Identification:\s+(.+)\s+\((\s+|unidentified)\)\s+is\s+now\s+(.+)\s+\((\s+)\)\s+\[(.+)\].$",
-            line,
-        ):
-            return Identification(
-                old_name=match.group(1),
-                old_id=match.group(2),
-                new_name=match.group(3),
-                new_id=match.group(4),
-                kind=match.group(5),
-            )
-        return None
+    def __init__(self: "Identification", kind: str, name: str):
+        super().__init__({"kind": kind if kind else "", "name": name if name else ""})
 
     def __str__(self) -> str:
-        old_name, old_id, new_name, new_id, kind = (
-            self.content["old_name"],
-            self.content["old_id"],
-            self.content["new_name"],
-            self.content["new_id"],
-            self.content["kind"],
-        )
-        return f"Identification: {old_name} ({old_id}) is now {new_name} ({new_id}) [{kind}]."
+        kind, name = (self.content["kind"], self.content["name"])
+        return f'Identification: {kind} is called "{name}".'
 
 
 class Waiting(Occurrence):
@@ -272,13 +175,6 @@ class Waiting(Occurrence):
 
     def __init__(self: "Waiting", waiting_on: dict):
         super().__init__(waiting_on if waiting_on else "")
-
-    @staticmethod
-    def parse(line: str) -> Optional["Waiting"]:
-        if match := re.match(r"^Waiting:\s+```(.+?)```$", line):
-            yaml_content = yaml.safe_load(match.group(1))
-            return Waiting(waiting_on=yaml_content)
-        return None
 
     def __str__(self) -> str:
         yaml_content = yaml.dump(self.content, default_flow_style=False).strip()
@@ -294,13 +190,6 @@ class Resuming(Occurrence):
     def __init__(self: "Resuming", resuming_on: dict):
         super().__init__(resuming_on if resuming_on else "")
 
-    @staticmethod
-    def parse(line: str) -> Optional["Resuming"]:
-        if match := re.match(r"^Resuming:\s+```(.+?)```$", line):
-            yaml_content = yaml.safe_load(match.group(1))
-            return Resuming(resuming_on=yaml_content)
-        return None
-
     def __str__(self) -> str:
         yaml_content = yaml.dump(self.content, default_flow_style=False).strip()
         return f"Resuming: ```{yaml_content}```"
@@ -312,13 +201,6 @@ class Working(Occurrence):
     def __init__(self: "Working", working_on: dict):
         super().__init__(working_on if working_on else "")
 
-    @staticmethod
-    def parse(line: str) -> Optional["Working"]:
-        if match := re.match(r"^Working:\s+```(.+?)```$", line):
-            yaml_content = yaml.safe_load(match.group(1))
-            return Working(working_on=yaml_content)
-        return None
-
     def __str__(self) -> str:
         yaml_content = yaml.dump(self.content, default_flow_style=False).strip()
         return f"Working: ```{yaml_content}```"
@@ -329,13 +211,6 @@ class Action(Occurrence):
 
     def __init__(self: "Action", action: dict):
         super().__init__(action if action else "")
-
-    @staticmethod
-    def parse(line: str) -> Optional["Action"]:
-        if match := re.match(r"^Action:\s+```(.+?)```$", line):
-            yaml_content = yaml.safe_load(match.group(1))
-            return Action(action=yaml_content)
-        return None
 
     def __str__(self) -> str:
         yaml_content = yaml.dump(self.content, default_flow_style=False).strip()
@@ -350,16 +225,12 @@ class Rejected(Occurrence):
             {"emotion": emotion if emotion else "", "says": says if says else ""}
         )
 
-    @staticmethod
-    def parse(line: str) -> Optional["Rejected"]:
-        if match := re.match(r"^Rejected:\s+(\((.*)\)\s+)?\"(.+)\"$", line):
-            return Rejected(emotion=match.group(2), says=match.group(3))
-        return None
-
     def __str__(self) -> str:
         emotion, says = self.content["emotion"], self.content["says"]
-        emotion_str = f"({emotion} " if emotion else ""
-        return f'Rejected: {emotion_str}"{says}"'
+        emotion_str = f"({emotion}) " if emotion else ""
+        says = says.replace('"', '\\"')
+        says_str = f'"""{says}"""' if "\n" in says else f'"{says}"'
+        return f"Rejected: {emotion_str}{says_str}"
 
 
 class CritiqueRequest(Occurrence):
@@ -368,14 +239,8 @@ class CritiqueRequest(Occurrence):
     def __init__(self: "CritiqueRequest", critique_request: str):
         super().__init__(critique_request if critique_request else "")
 
-    @staticmethod
-    def parse(line: str) -> Optional["CritiqueRequest"]:
-        if match := re.match(r"^Critique Request:\s+(.+)$", line):
-            return CritiqueRequest(critique_request=match.group(1))
-        return None
-
     def __str__(self) -> str:
-        return f'Critique Request: "{self.content}"'
+        return f"Critique Request: {self.content}"
 
 
 class Critique(Occurrence):
@@ -383,12 +248,6 @@ class Critique(Occurrence):
 
     def __init__(self: "Critique", critique: str):
         super().__init__(critique if critique else "")
-
-    @staticmethod
-    def parse(line: str) -> Optional["Critique"]:
-        if match := re.match(r"^Critique:\s+(.+)$", line):
-            return Critique(critique=match.group(1))
-        return None
 
     def __str__(self) -> str:
         return f"Critique: {self.content}"
@@ -400,12 +259,6 @@ class RevisionRequest(Occurrence):
     def __init__(self: "RevisionRequest", revision_request: str):
         super().__init__(revision_request if revision_request else "")
 
-    @staticmethod
-    def parse(line: str) -> Optional["RevisionRequest"]:
-        if match := re.match(r"^Revision Request:\s+(.+)$", line):
-            return RevisionRequest(revision_request=match.group(1))
-        return None
-
     def __str__(self) -> str:
         return f"Revision Request: {self.content}"
 
@@ -413,137 +266,303 @@ class RevisionRequest(Occurrence):
 class Revision(Occurrence):
     """The revision by an RLAIF agent."""
 
-    def __init__(self: "Revision", revision: str):
-        super().__init__(revision if revision else "")
-
-    @staticmethod
-    def parse(line: str) -> Optional["Revision"]:
-        if match := re.match(r"^Revision:\s+\"(.+)\"$", line):
-            return Revision(revision=match.group(1))
-        return None
+    def __init__(self: "Revision", emotion: str, says: str):
+        super().__init__(
+            {"emotion": emotion if emotion else "", "says": says if says else ""}
+        )
 
     def __str__(self) -> str:
-        return f'Revision: "{self.content}"'
+        emotion, says = self.content["emotion"], self.content["says"]
+        emotion_str = f"({emotion}) " if emotion else ""
+        says = says.replace('"', '\\"')
+        says_str = f'"""{says}"""' if "\n" in says else f'"{says}"'
+        return f"Revision: {emotion_str}{says_str}"
 
 
 class MomentParseException(Exception):
     pass
 
 
+def walk(node, occurrences: List[Occurrence]):
+    if node.expr_name == "Instructions":
+        instructions = ""
+        for child in node.children:
+            if child.expr_name == "tqs_content":
+                instructions = child.text
+        occurrences.append(Instructions(instructions))
+    elif node.expr_name == "Example":
+        title = ""
+        example = ""
+        for child in node.children:
+            if child.expr_name == "title":
+                title = child.text.strip()
+            elif child.expr_name == "tqs_content":
+                example = child.text
+        occurrences.append(Example(title, example))
+    elif node.expr_name == "Begin":
+        occurrences.append(Begin())
+    elif node.expr_name == "Context":
+        yaml_content = {}
+        for child in node.children:
+            if child.expr_name == "ct_content":
+                yaml_content = yaml.safe_load(child.text)
+        occurrences.append(Context(yaml_content))
+    elif node.expr_name == "Self":
+        emotion = ""
+        says = ""
+        for child in node.children:
+            if child.expr_name == "says_string":
+                says_node = child
+                for says_child in says_node.children:
+                    if says_child.expr_name == "q_string":
+                        for content_child in says_child.children:
+                            if content_child.expr_name == "q_content":
+                                says = content_child.text
+                    elif says_child.expr_name == "tq_string":
+                        for content_child in says_child.children:
+                            if content_child.expr_name == "tq_content":
+                                says = content_child.text
+            elif child.text.strip():
+                other_node = child
+                for other_child in other_node.children:
+                    if other_child.expr_name == "emotion":
+                        emotion_node = other_child
+                        for emotion_child in emotion_node.children:
+                            if emotion_child.expr_name == "emotion_content":
+                                emotion = emotion_child.text
+        occurrences.append(Self(emotion, says))
+    elif node.expr_name == "Rejected":
+        emotion = ""
+        says = ""
+        for child in node.children:
+            if child.expr_name == "says_string":
+                says_node = child
+                for says_child in says_node.children:
+                    if says_child.expr_name == "q_string":
+                        for content_child in says_child.children:
+                            if content_child.expr_name == "q_content":
+                                says = content_child.text
+                    elif says_child.expr_name == "tq_string":
+                        for content_child in says_child.children:
+                            if content_child.expr_name == "tq_content":
+                                says = content_child.text
+            elif child.text.strip():
+                other_node = child
+                for other_child in other_node.children:
+                    if other_child.expr_name == "emotion":
+                        emotion_node = other_child
+                        for emotion_child in emotion_node.children:
+                            if emotion_child.expr_name == "emotion_content":
+                                emotion = emotion_child.text
+        occurrences.append(Rejected(emotion, says=says))
+    elif node.expr_name == "Thought":
+        says = ""
+        for child in node.children:
+            if child.expr_name == "says_string":
+                says_node = child
+                for says_child in says_node.children:
+                    if says_child.expr_name == "q_string":
+                        for content_child in says_child.children:
+                            if content_child.expr_name == "q_content":
+                                says = content_child.text
+                    elif says_child.expr_name == "tq_string":
+                        for content_child in says_child.children:
+                            if content_child.expr_name == "tq_content":
+                                says = content_child.text
+        occurrences.append(Thought(thought=says))
+    elif node.expr_name == "Motivation":
+        motivation = ""
+        for child in node.children:
+            if child.expr_name == "string":
+                motivation = child.text
+        occurrences.append(Motivation(motivation))
+    elif node.expr_name == "Observation":
+        observation = ""
+        for child in node.children:
+            if child.expr_name == "string":
+                observation = child.text
+        occurrences.append(Observation(observation))
+    elif node.expr_name == "Waiting":
+        yaml_content = {}
+        for child in node.children:
+            if child.expr_name == "ct_content":
+                yaml_content = yaml.safe_load(child.text)
+        occurrences.append(Waiting(waiting_on=yaml_content))
+    elif node.expr_name == "Resuming":
+        yaml_content = {}
+        for child in node.children:
+            if child.expr_name == "ct_content":
+                yaml_content = yaml.safe_load(child.text)
+        occurrences.append(Resuming(resuming_on=yaml_content))
+    elif node.expr_name == "Working":
+        yaml_content = {}
+        for child in node.children:
+            if child.expr_name == "ct_content":
+                yaml_content = yaml.safe_load(child.text)
+        occurrences.append(Working(working_on=yaml_content))
+    elif node.expr_name == "Action":
+        yaml_content = {}
+        for child in node.children:
+            if child.expr_name == "ct_content":
+                yaml_content = yaml.safe_load(child.text)
+        occurrences.append(Action(action=yaml_content))
+    elif node.expr_name == "CritiqueRequest":
+        string = ""
+        for child in node.children:
+            if child.expr_name == "string":
+                string = child.text
+        occurrences.append(CritiqueRequest(critique_request=string))
+    elif node.expr_name == "Critique":
+        string = ""
+        for child in node.children:
+            if child.expr_name == "string":
+                string = child.text
+        occurrences.append(Critique(critique=string))
+    elif node.expr_name == "RevisionRequest":
+        string = ""
+        for child in node.children:
+            if child.expr_name == "string":
+                string = child.text
+        occurrences.append(RevisionRequest(revision_request=string))
+    elif node.expr_name == "Revision":
+        emotion = ""
+        says = ""
+        for child in node.children:
+            if child.expr_name == "says_string":
+                says_node = child
+                for says_child in says_node.children:
+                    if says_child.expr_name == "q_string":
+                        for content_child in says_child.children:
+                            if content_child.expr_name == "q_content":
+                                says = content_child.text
+                    elif says_child.expr_name == "tq_string":
+                        for content_child in says_child.children:
+                            if content_child.expr_name == "tq_content":
+                                says = content_child.text
+            elif child.text.strip():
+                other_node = child
+                for other_child in other_node.children:
+                    if other_child.expr_name == "emotion":
+                        emotion_node = other_child
+                        for emotion_child in emotion_node.children:
+                            if emotion_child.expr_name == "emotion_content":
+                                emotion = emotion_child.text
+        occurrences.append(Revision(emotion, says))
+    elif node.expr_name == "Participant":
+        participant = ""
+        identifier = ""
+        emotion = ""
+        says = ""
+        for child in node.children:
+            if child.expr_name == "participant":
+                participant = child.text
+            elif child.expr_name == "says_string":
+                says_node = child
+                for says_child in says_node.children:
+                    if says_child.expr_name == "q_string":
+                        for content_child in says_child.children:
+                            if content_child.expr_name == "q_content":
+                                says = content_child.text
+                    elif says_child.expr_name == "tq_string":
+                        for content_child in says_child.children:
+                            if content_child.expr_name == "tq_content":
+                                says = content_child.text
+            elif child.text.strip():
+                other_node = child
+                for other_child in other_node.children:
+                    if other_child.expr_name == "emotion":
+                        emotion_node = other_child
+                        for emotion_child in emotion_node.children:
+                            if emotion_child.expr_name == "emotion_content":
+                                emotion = emotion_child.text
+        occurrences.append(Participant(participant, emotion, says))
+    elif node.expr_name == "Identification":
+        kind = ""
+        name = ""
+        for child in node.children:
+            if child.expr_name == "kind":
+                kind = child.text
+            elif child.expr_name == "name":
+                name_node = child
+                for name_child in name_node.children:
+                    if name_child.expr_name == "name_content":
+                        name = name_child.text
+        occurrences.append(Identification(kind, name))
+    elif node.expr_name.strip():
+        assert node.expr_name in ["Occurrence", "Occurrences"]
+        for child in node.children:
+            walk(child, occurrences)
+
+
 class Moment:
     """A class specifically designed for agents to capture and structure their observations of events and interactions in real life or online environments."""
 
-    id: str
-    occurrences: list[Occurrence]
+    occurrences: List[Occurrence]
 
     # pylint: disable=redefined-builtin
-    def __init__(self, id: str, occurrences: list[Occurrence]):
-        self.id = id
+    def __init__(self, occurrences: List[Occurrence]):
         self.occurrences = occurrences
 
     @classmethod
     def parse(cls, obj: Union[str, dict]) -> "Moment":
-        id: str
-        occurrences: list[Occurrence]
+        occurrences: List[Occurrence]
         if isinstance(obj, str):
-            id, occurrences = cls._parse_text(obj)
+            occurrences = cls._parse_text(obj)
         elif isinstance(obj, dict):
-            id, occurrences = cls._parse_dict(obj)
-        return cls(id=id, occurrences=occurrences)
+            occurrences = cls._parse_dict(obj)
+        return cls(occurrences=occurrences)
 
     @classmethod
-    def _parse_dict(cls, moment: dict) -> Tuple[str, list[Occurrence]]:
-        id = moment["id"]
-        occurrences: list[Occurrence] = []
+    def _parse_dict(cls, moment: dict) -> List[Occurrence]:
+        occurrences: List[Occurrence] = []
         for occurrence in moment["occurrences"]:
             kind = occurrence.pop("kind", None)
-            match kind:
-                case "Instructions":
-                    occurrences.append(Instructions(occurrence["content"]))
-                case "Example":
-                    occurrences.append(Example(**occurrence["content"]))
-                case "Begin":
-                    occurrences.append(Begin())
-                case "Thought":
-                    occurrences.append(Thought(occurrence["content"]))
-                case "Motivation":
-                    occurrences.append(Motivation(occurrence["content"]))
-                case "Observation":
-                    occurrences.append(Observation(occurrence["content"]))
-                case "Self":
-                    occurrences.append(Self(**occurrence["content"]))
-                case "Identification":
-                    occurrences.append(Identification(**occurrence["content"]))
-                case "Context":
-                    occurrences.append(Context(occurrence["content"]))
-                case "Action":
-                    occurrences.append(Action(**occurrence["content"]))
-                case "Waiting":
-                    occurrences.append(Waiting(**occurrence["content"]))
-                case "Resuming":
-                    occurrences.append(Resuming(**occurrence["content"]))
-                case "Working":
-                    occurrences.append(Working(**occurrence["content"]))
-                case "Rejected":
-                    occurrences.append(Rejected(**occurrence["content"]))
-                case "CritiqueRequest":
-                    occurrences.append(CritiqueRequest(occurrence["content"]))
-                case "Critique":
-                    occurrences.append(Critique(occurrence["content"]))
-                case "RevisionRequest":
-                    occurrences.append(RevisionRequest(occurrence["content"]))
-                case "Revision":
-                    occurrences.append(Revision(**occurrence["content"]))
-                case "Participant":
-                    occurrences.append(Participant(**occurrence["content"]))
-
-        return id, occurrences
+            if kind == "Instructions":
+                occurrences.append(Instructions(occurrence["content"]))
+            elif kind == "Example":
+                occurrences.append(Example(**occurrence["content"]))
+            elif kind == "Begin":
+                occurrences.append(Begin())
+            elif kind == "Thought":
+                occurrences.append(Thought(occurrence["content"]))
+            elif kind == "Motivation":
+                occurrences.append(Motivation(occurrence["content"]))
+            elif kind == "Observation":
+                occurrences.append(Observation(occurrence["content"]))
+            elif kind == "Self":
+                occurrences.append(Self(**occurrence["content"]))
+            elif kind == "Identification":
+                occurrences.append(Identification(**occurrence["content"]))
+            elif kind == "Context":
+                occurrences.append(Context(occurrence["content"]))
+            elif kind == "Action":
+                occurrences.append(Action(**occurrence["content"]))
+            elif kind == "Waiting":
+                occurrences.append(Waiting(**occurrence["content"]))
+            elif kind == "Resuming":
+                occurrences.append(Resuming(**occurrence["content"]))
+            elif kind == "Working":
+                occurrences.append(Working(**occurrence["content"]))
+            elif kind == "Rejected":
+                occurrences.append(Rejected(**occurrence["content"]))
+            elif kind == "CritiqueRequest":
+                occurrences.append(CritiqueRequest(occurrence["content"]))
+            elif kind == "Critique":
+                occurrences.append(Critique(occurrence["content"]))
+            elif kind == "RevisionRequest":
+                occurrences.append(RevisionRequest(occurrence["content"]))
+            elif kind == "Revision":
+                occurrences.append(Revision(**occurrence["content"]))
+            elif kind == "Participant":
+                occurrences.append(Participant(**occurrence["content"]))
+        return occurrences
 
     @classmethod
-    def _parse_text(cls, text: str) -> Tuple[str, list[Occurrence]]:
-        id: str = ""
-        occurrences: list[Occurrence] = []
-        lines = text.split("\n")
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-            if line.startswith("#"):
-                # Moment Id
-                if match := re.match(r"^#\s+Moment\s*[ID|id|Id]:\s+(.+)$", line):
-                    id = str(match.group(1))
-
-            occurrence_class: Type[Occurrence]
-            occurrence_classes: list[Type[Occurrence]] = [
-                Instructions,
-                Example,
-                Begin,
-                Thought,
-                Motivation,
-                Observation,
-                Self,
-                Identification,
-                Context,
-                Action,
-                Waiting,
-                Resuming,
-                Working,
-                Rejected,
-                CritiqueRequest,
-                Critique,
-                RevisionRequest,
-                Revision,
-                Participant,
-            ]
-            for occurrence_class in occurrence_classes:
-                parsed_occurrence = occurrence_class.parse(line)
-                if parsed_occurrence:
-                    occurrences.append(parsed_occurrence)
-                    break
-            else:
-                if line.strip() != "":
-                    raise ValueError(f"Invalid MDL syntax in line: {line}")
-        return id, occurrences
+    def _parse_text(cls, text: str) -> List[Occurrence]:
+        occurrences: List[Occurrence] = []
+        parsed = GRAMMAR.parse(text)
+        walk(parsed, occurrences)
+        return occurrences
 
     def __str__(self) -> str:
         moment_str = ""
@@ -554,7 +573,6 @@ class Moment:
     def to_dict(self) -> dict:
         return deepcopy(
             {
-                "id": self.id,
                 "occurrences": [
                     occurrence.to_dict() for occurrence in self.occurrences
                 ],

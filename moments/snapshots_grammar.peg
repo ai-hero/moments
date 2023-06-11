@@ -1,0 +1,14 @@
+Snapshot         = SnapshotLine*
+SnapshotLine     = MomentId / SnapshotId / PreviousSnapshotId / Timestamp / Annotations / MomentLine
+MomentId         = '# Moment ID:' ws+ uuid newline
+SnapshotId       = '# Snapshot ID:' ws+ uuid newline
+PreviousSnapshotId = '# Previous Snapshot ID:' ws+ uuid newline
+Timestamp        = '# Timestamp:' ws+ iso8601_timestamp newline
+Annotations      = '# Annotations:' ws+ '```' ct_content '```' newline
+MomentLine       = ~r'.*' newline
+
+uuid             = ~r'[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
+iso8601_timestamp = ~r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2})'
+ct_content       = ~r'(?:[^`]|`[^`]|``[^`])*'
+ws               = ~r'[ \t]'
+newline          = ~r'[\r\n]+' / ~r'$'
