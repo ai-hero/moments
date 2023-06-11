@@ -21,6 +21,7 @@ Revision       = 'Revision:' ws+ emotion? says_string newline
 Participant    = participant ':' ws+ emotion? says_string newline
 Identification = 'Identification:' ws+ kind ws+ 'is called' ws+ name stop newline
 
+uuid           = ~r'[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
 emotion        = '(' emotion_content ')' ws+
 emotion_content= ~r'[^\)]*'
 name           = '\"' name_content '\"'

@@ -1,12 +1,12 @@
 import pytest
 import difflib
 from glob import glob
-from moments.moment import Moment
+from moments.snapshot import Snapshot
 from pathlib import Path
 
 
 def get_mdls():
-    p = Path(__file__).with_name("moments") / "*.mdl"
+    p = Path(__file__).with_name("snapshots") / "*.mdl"
     filelist = glob(p.absolute().as_posix())
     mdls = []
     for file in filelist:
@@ -18,7 +18,7 @@ def get_mdls():
 class TestMoments:
     @pytest.mark.parametrize("mdl", get_mdls())
     def test_good(self, mdl: str):
-        parsed = Moment.parse(mdl)
+        parsed = Snapshot.parse(mdl)
         assert parsed is not None
         the_difference = difflib.unified_diff(mdl.split("\n"), str(parsed).split("\n"))
         has_difference = False

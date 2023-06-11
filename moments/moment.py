@@ -1,13 +1,12 @@
-import re
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Tuple, Type, Union
 
 import yaml
 from parsimonious.grammar import Grammar
 
-p = Path(__file__).with_name("grammar.peg")
+p = Path(__file__).with_name("moments_grammar.peg")
 with p.open("r", encoding="utf-8") as f:
     GRAMMAR = Grammar(f.read())
 
@@ -498,28 +497,23 @@ def walk(node, occurrences: List[Occurrence]):
 class Moment:
     """A class specifically designed for agents to capture and structure their observations of events and interactions in real life or online environments."""
 
-    id: str
     occurrences: List[Occurrence]
 
     # pylint: disable=redefined-builtin
-    def __init__(self, id: str, occurrences: List[Occurrence]):
-        self.id = id
+    def __init__(self, occurrences: List[Occurrence]):
         self.occurrences = occurrences
 
     @classmethod
     def parse(cls, obj: Union[str, dict]) -> "Moment":
-        id: str
         occurrences: List[Occurrence]
         if isinstance(obj, str):
-            id, occurrences = cls._parse_text(obj)
+            occurrences = cls._parse_text(obj)
         elif isinstance(obj, dict):
-            id, occurrences = cls._parse_dict(obj)
-        return cls(id=id, occurrences=occurrences)
+            occurrences = cls._parse_dict(obj)
+        return cls(occurrences=occurrences)
 
     @classmethod
-    def _parse_dict(cls, moment: dict) -> Tuple[str, List[Occurrence]]:
-        id = moment["id"]
-
+    def _parse_dict(cls, moment: dict) -> List[Occurrence]:
         occurrences: List[Occurrence] = []
         for occurrence in moment["occurrences"]:
             kind = occurrence.pop("kind", None)
@@ -561,16 +555,14 @@ class Moment:
                 occurrences.append(Revision(**occurrence["content"]))
             elif kind == "Participant":
                 occurrences.append(Participant(**occurrence["content"]))
-
-        return id, occurrences
+        return occurrences
 
     @classmethod
-    def _parse_text(cls, text: str) -> Tuple[str, List[Occurrence]]:
-        id: str = ""
+    def _parse_text(cls, text: str) -> List[Occurrence]:
         occurrences: List[Occurrence] = []
         parsed = GRAMMAR.parse(text)
         walk(parsed, occurrences)
-        return id, occurrences
+        return occurrences
 
     def __str__(self) -> str:
         moment_str = ""
@@ -581,7 +573,6 @@ class Moment:
     def to_dict(self) -> dict:
         return deepcopy(
             {
-                "id": self.id,
                 "occurrences": [
                     occurrence.to_dict() for occurrence in self.occurrences
                 ],

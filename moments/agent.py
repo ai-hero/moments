@@ -55,9 +55,9 @@ class Agent(ABC):
     def system(self: "Agent") -> Snapshot:
         """Initializes the moment with system part of the prompt"""
         moment = Moment.parse(self.config.init)
-        moment.id = str(uuid4())
         return Snapshot(
-            id=str(uuid4()),
+            moment_id=str(uuid4()),
+            snapshot_id=str(uuid4()),
             moment=moment,
             previous_snapshot_id=None,
             timestamp=datetime.now().isoformat(),
@@ -68,8 +68,9 @@ class Agent(ABC):
         self.before(snapshot.moment)
         self.do(snapshot.moment)
         self.after(snapshot.moment)
-        snapshot.previous_snapshot_id = snapshot.id  # Chain it
-        snapshot.id = str(uuid4())  # next it
+        snapshot.previous_snapshot_id = snapshot.snapshot_id  # Chain it
+        snapshot.moment_id = snapshot.moment_id  # next it
+        snapshot.snapshot_id = str(uuid4())  # next it
         snapshot.timestamp = datetime.now().isoformat()
         return snapshot
 

@@ -1,14 +1,62 @@
 import re
 from moments.moment import Moment
-from typing import Union, Optional
+from pathlib import Path
+from typing import Union, Optional, Dict, Any
 from copy import deepcopy
 import yaml
+from parsimonious.grammar import Grammar
+
+p = Path(__file__).with_name("snapshots_grammar.peg")
+with p.open("r", encoding="utf-8") as f:
+    GRAMMAR = Grammar(f.read())
+
+
+def walk(node, snapshot_dict: dict):
+    if node.expr_name == "MomentId":
+        moment_id = ""
+        for child in node.children:
+            if child.expr_name == "uuid":
+                moment_id = child.text
+        snapshot_dict["moment_id"] = moment_id
+    elif node.expr_name == "SnapshotId":
+        snapshot_id = ""
+        for child in node.children:
+            if child.expr_name == "uuid":
+                snapshot_id = child.text
+        snapshot_dict["snapshot_id"] = snapshot_id
+    elif node.expr_name == "PreviousSnapshotId":
+        previous_snapshot_id = ""
+        for child in node.children:
+            if child.expr_name == "uuid":
+                previous_snapshot_id = child.text
+        snapshot_dict["previous_snapshot_id"] = previous_snapshot_id
+    elif node.expr_name == "Timestamp":
+        timestamp = ""
+        for child in node.children:
+            if child.expr_name == "iso8601_timestamp":
+                timestamp = child.text
+        snapshot_dict["timestamp"] = timestamp
+    elif node.expr_name == "Annotations":
+        annotations = ""
+        for child in node.children:
+            if child.expr_name == "ct_content":
+                annotations = child.text
+        snapshot_dict["annotations"] = annotations
+    elif node.expr_name == "MomentLine":
+        if "moment" not in snapshot_dict:
+            snapshot_dict["moment"] = []
+        for child in node.children:
+            snapshot_dict["moment"].append(child.text)
+    elif node.expr_name.strip():
+        for child in node.children:
+            walk(child, snapshot_dict)
 
 
 class Snapshot:
     """A class to capture a moment at specific time."""
 
-    id: str
+    moment_id: str
+    snapshot_id: str
     previous_snapshot_id: Optional[str]
     timestamp: str
     annotation: dict
@@ -16,13 +64,15 @@ class Snapshot:
     # pylint: disable=redefined-builtin
     def __init__(
         self: "Snapshot",
-        id: str,
+        moment_id: str,
+        snapshot_id: str,
         moment: Moment,
         previous_snapshot_id: Optional[str],
         timestamp: str,
         annotations: dict,
     ):
-        self.id = id
+        self.moment_id = moment_id
+        self.snapshot_id = snapshot_id
         self.moment = moment
         self.previous_snapshot_id = previous_snapshot_id
         self.timestamp = timestamp
@@ -31,44 +81,26 @@ class Snapshot:
     @classmethod
     def parse(cls, obj: Union[str, dict]) -> "Snapshot":
         if isinstance(obj, dict):
-            id = obj["id"]
+            moment_id = obj["moment_id"]
+            snapshot_id = obj["snapshot_id"]
             previous_snapshot_id = obj.get("previous_snapshot_id", None)
             timestamp = obj.get("timestamp", None)
             moment = Moment.parse(obj["moment"])
             annotations = obj.get("annotations", None)
         elif isinstance(obj, str):
-            lines = str(obj).splitlines()
-            moment_text = ""
-            for line in lines:
-                if line.startswith("#"):
-                    # Snapshot Id
-                    if match := re.match(r"^#\s+Snapshot\s*[ID|id|Id]:\s+(.+)$", line):
-                        id = match.group(1)
-                    else:
-                        id = None
-
-                    # Previous Snapshot Id
-                    if match := re.match(
-                        r"^#\s+Previous\sSnapshot\s*[ID|id|Id]:\s+(.+)$", line
-                    ):
-                        previous_snapshot_id = match.group(1)
-                    else:
-                        previous_snapshot_id = None
-
-                    # Timestamp
-                    if match := re.match(r"^#\s+Timestamp:\s+(.+)$", line):
-                        timestamp = match.group(1)
-                    else:
-                        timestamp = None
-
-                    # Annotations
-                    if match := re.match(r"^#\s+Annotations:\s+```(.+?)```$", line):
-                        annotations = yaml.safe_load(match.group(1))
-                    else:
-                        annotations = None
-            moment = Moment.parse(moment_text)
+            snapshot_dict: Dict[str, Any] = {}
+            parsed = GRAMMAR.parse(obj)
+            walk(parsed, snapshot_dict)
+            moment_id = snapshot_dict["moment_id"]
+            snapshot_id = snapshot_dict["snapshot_id"]
+            previous_snapshot_id = snapshot_dict.get("previous_snapshot_id", None)
+            timestamp = snapshot_dict["timestamp"]
+            if "annotations" in snapshot_dict:
+                annotations = yaml.safe_load(snapshot_dict["annotations"])
+            moment = Moment.parse("".join(snapshot_dict["moment"]))
         return cls(
-            id=id,
+            moment_id=moment_id,
+            snapshot_id=snapshot_id,
             moment=moment,
             previous_snapshot_id=previous_snapshot_id,
             timestamp=timestamp,
@@ -77,19 +109,20 @@ class Snapshot:
 
     def __str__(self) -> str:
         to_str = ""
-        to_str += f"# Snapshot ID: {self.id}\n"
+        to_str += f"# Moment ID: {self.moment_id}\n"
+        to_str += f"# Snapshot ID: {self.snapshot_id}\n"
         if self.previous_snapshot_id:
             to_str += f"# Previous Snapshot ID: {self.previous_snapshot_id}\n"
-        if self.timestamp:
-            to_str += f"# Timestamp: {self.timestamp}\n"
+        to_str += f"# Timestamp: {self.timestamp}\n"
         if self.annotations:
-            to_str += f"# Annotations: ```{yaml.dump(self.annotation, default_flow_style=False).strip()}```\n"
+            to_str += f"# Annotations: ```\n{yaml.dump(self.annotations, default_flow_style=False).strip()}\n```\n"
         return to_str + str(self.moment)
 
     def to_dict(self) -> dict:
         return deepcopy(
             {
-                "id": self.id,
+                "moment_id": self.moment_id,
+                "snapshot_id": self.snapshot_id,
                 "previous_snapshot_id": self.previous_snapshot_id,
                 "timestamp": self.timestamp,
                 "annotations": self.annotations,
