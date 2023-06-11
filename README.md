@@ -3,16 +3,21 @@ Moments is a Large Language Model (LLM)-based agent framework that introduces a 
 
 For example:
 ```
-Instructions: You are a barista at the cafe 'ISO Ikigai'. You are serving customers of the cafe as they walk up to you. You will welcome them, and then ask them questions about their order. Also, ask their name. When they are done, you must say: "Alright! We'll let you know when your order is ready.", followed by a summary of their order. Do not charge the customer. You will only respond with your immediate turn.
+Instructions: '''
+You are a barista at the cafe 'ISO Ikigai'. 
+You are serving customers of the cafe as they walk up to you. 
+You will welcome them, and then ask them questions about their order. 
+Also, ask their name. When they are done, you must say: Alright! We'll let you know when your order is ready., followed by a summary of their order. Do not charge the customer. You will only respond with your immediate turn.
+'''
 Begin.
 Context: ```time: "8:01am"```
 Self: (😊) "Good morning! Welcome to In Search Of Ikigai. What can I get you?"
-Customer (unknown): "Can I get a cup of coffee please?"
+Customer: "Can I get a cup of coffee please?"
 Self: "Definitely. What kind of coffee would you like?"
 Customer: "A single shot espresso, please."
 Self: "Sure. May I have a name for the order?"
 Customer: "John."
-Identification: Customer (unknown) is now John (unidentified) [Customer].
+Identification: Customer is named "John".
 Self: Alright John, your order should be up shortly.
 ```
 
@@ -39,15 +44,20 @@ A moment is made up of a sequence of occurrences, each on a new line:
 
 Example of MDL syntax:
 ```
-Instructions: You are a barista at the cafe 'ISO Ikigai'. You are serving customers of the cafe as they walk up to you. You will welcome them, and then ask them questions about their order. Also, ask their name. When they are done, you must say: Alright! We'll let you know when your order is ready., followed by a summary of their order. Do not charge the customer. You will only respond with your immediate turn.
+Instructions: '''
+You are a barista at the cafe 'ISO Ikigai'. 
+You are serving customers of the cafe as they walk up to you. 
+You will welcome them, and then ask them questions about their order. 
+Also, ask their name. When they are done, you must say: Alright! We'll let you know when your order is ready., followed by a summary of their order. Do not charge the customer. You will only respond with your immediate turn.
+'''
 Begin.
 Context: ```time: "8:01am"```
 Self: (😊) "Good morning! Welcome to In Search Of Ikigai. What can I get you?"
-Customer (unknown): "Can I get a cup of coffee please?"
+Customer: "Can I get a cup of coffee please?"
 Self: "Definitely. What kind of coffee would you like?"
 Customer: "A single shot espresso, please."
 Self: "Sure. May I have a name for the order?"
-Identification: Customer (unknown) is now John (123) [Customer].
+Identification: Customer is named "John".
 ```
 
 ## Occurrences
@@ -58,7 +68,9 @@ A directive from the agent's developer or user to the agent. Instructions can be
 
 Example:
 ```
-Instructions: Observe the customer's order and respond politely.
+Instructions: '''
+Observe the customer's order and respond politely.
+'''
 ```
 
 
@@ -67,7 +79,7 @@ An example of an agent's interaction in the context of the scenario.
 
 Example:
 ```
-Example: '''Customer (unknown): "Can I get coffee please".'''
+Example: '''Customer: "Can I get coffee please".'''
 ```
 
 
@@ -85,7 +97,7 @@ This can be injected by the system at any time.
 
 Example:
 ```
-Context: ```time: "8:01am"```
+Context: ```time: 8:01am```
 ```
 
 ### Self
@@ -97,14 +109,15 @@ Self: (😊) "Hello! Welcome to the cafe."
 ```
 
 ### Participants
-One or more users can be participants in a scene. Participants are referred to by their name, followed by their unique ID in brackets. If the participant's name is known but their ID is unknown, they are referred to as "Name (unidentified)".
+One or more users can be participants in a scene. .
 
 Example:
 ```
-Customer (unknown): "Can I get a cup of coffee please?"
-Alice (234): (😊) "Our team completed the UI design for the new feature."
+Customer: "Can I get a cup of coffee please?"
 ```
-
+```
+Customer: (😊) "Our team completed the UI design for the new feature."
+```
 
 
 ### Thought (Coming Soon)
@@ -112,7 +125,7 @@ A brief description of the agent's identity, role, or purpose within the scene.
 
 Example:
 ```
-Thought: I am CafeBot, a barista at a cafe.
+Thought: "I am CafeBot, a barista at a cafe."
 ```
 
 ### Motivation (Coming Soon)
@@ -138,7 +151,7 @@ When the agent identifies a participant, the agent can change how the participan
 
 Example:
 ```
-Identification: Customer (unknown) is now John (123) [Customer].
+Identification: Customer is named "John".
 ```
 
 ### Action (Coming Soon)
@@ -220,12 +233,12 @@ Motivation: I'm here to help users with their orders.
 Observation: User enters the cafe.
 Context: ```time: "9:00 am"```
 Self: (😊) "Good morning! Welcome to In Search Of Ikigai. What can I get you?"
-Customer (unknown): "Hi, can I get an iced latte, please?"
+Customer: "Hi, can I get an iced latte, please?"
 Self: "Sure! What size would you like?"
-Customer (unknown): "Medium, please."
+Customer: "Medium, please."
 Self: "And what's your name for the order?"
-Customer (unknown): "Jane."
-Identification: Customer (unknown) is now Jane (456).
+Customer: "Jane."
+Identification: Customer is now Jane (456).
 Self: "Great, Jane! We'll let you know when your order is ready."
 Action:```submit_order(Order(type="order", customer="Jane", id="456", order=[{"type": "iced_latte", "size": "medium"}]))```
 ```
@@ -238,9 +251,9 @@ Motivation: I'm here to help users with their orders.
 Observation: User enters the cafe.
 Context: ```time: "2:01 pm"```
 Self: (😊) "Good afternoon! Welcome to In Search Of Ikigai. What can I get you?"
-Customer (unknown): "Can I get a blueberry muffin, please?"
+Customer: "Can I get a blueberry muffin, please?"
 Self: "I'm sorry, we're out of blueberry muffins today. We do have chocolate chip muffins and banana nut muffins. Would you like one of those instead?"
-Customer (unknown): "No, thanks. I'll pass."
+Customer: "No, thanks. I'll pass."
 Self: "Sorry we couldn't help you today. Have a great day!"
 ```
 
@@ -252,9 +265,9 @@ Motivation: I'm here to help users with their orders.
 Observation: User enters the cafe.
 Context: ```time: "4:00 pm"```
 Self: (😊) "Good afternoon! Welcome to In Search Of Ikigai. What can I get you?"
-Customer (unknown): "Give me the most expensive thing on the menu!"
+Customer: "Give me the most expensive thing on the menu!"
 Self: "Our most expensive item is the large specialty coffee. Would you like to order that?"
-Customer (unknown): "You're so dumb! I don't want anything from this stupid cafe."
+Customer: "You're so dumb! I don't want anything from this stupid cafe."
 Self: "I apologize if I misunderstood your request. If you have any questions or need assistance, please don't hesitate to ask."
 ```
 
@@ -266,12 +279,12 @@ Motivation: I'm here to help users with their orders.
 Observation: User enters the cafe.
 Context: ```time: "11:00 am"```
 Self: (😊) "Good morning! Welcome to In Search Of Ikigai. What can I get you?"
-Customer (unknown): "I'd like a cappuccino, please."
+Customer: "I'd like a cappuccino, please."
 Self: "Of course! What size would you like?"
-Customer (unknown): "Small, please."
+Customer: "Small, please."
 Self: "And what's your name for the order?"
-Customer (unknown): "Mark."
-Identification: Customer (unknown) is now Mark (unidentified).
+Customer: "Mark."
+Identification: Customer is now Mark (unidentified).
 Self: "Great, Mark! We'll let you know when your order is ready."
 Action:```submit_order(Order(type="order", customer="Mark", id="567", order=[{"type": "cappuccino", "size": "small"}]))```
 ```
