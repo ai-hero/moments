@@ -97,31 +97,31 @@ class Self(Occurrence):
 class Participant(Occurrence):
     """
     What the participant (e.g. one or more users or other agents) say. Attributes:
-    name - the known name of the user or generic class.
+    kind - the known kind of the user or generic class.
     identifier - the known identifier of the user, else 'unidentified' or 'unknonwn';
     emotion - the optional emotion they are expressing.
     says - what they are saying
     """
 
-    def __init__(self: "Participant", name: str, emotion: str, says: str):
+    def __init__(self: "Participant", kind: str, emotion: str, says: str):
         super().__init__(
             {
-                "name": name if name else "",
+                "kind": kind if kind else "Human",
                 "emotion": emotion if emotion else "",
                 "says": says if says else "",
             }
         )
 
     def __str__(self) -> str:
-        name, emotion, says = (
-            self.content["name"],
+        kind, emotion, says = (
+            self.content["kind"],
             self.content["emotion"],
             self.content["says"],
         )
         emotion_str = f"({emotion}) " if emotion else ""
         says = says.replace('"', '\\"')
         says_str = f'"""{says}"""' if "\n" in says else f'"{says}"'
-        return f"{name}: {emotion_str}{says_str}"
+        return f"{kind}: {emotion_str}{says_str}"
 
 
 class Motivation(Occurrence):
@@ -450,7 +450,6 @@ def walk(node, occurrences: List[Occurrence]):
         occurrences.append(Revision(emotion, says))
     elif node.expr_name == "Participant":
         participant = ""
-        identifier = ""
         emotion = ""
         says = ""
         for child in node.children:
