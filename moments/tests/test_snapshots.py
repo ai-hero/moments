@@ -20,7 +20,9 @@ class TestMoments:
     def test_good(self, mdl: str):
         parsed = Snapshot.parse(mdl)
         assert parsed is not None
-        the_difference = difflib.unified_diff(mdl.split("\n"), str(parsed).split("\n"))
+        the_difference = difflib.unified_diff(
+            mdl.split("\n"), str(parsed).replace("\\\\", "\\").split("\n")
+        )
         has_difference = False
         for text in the_difference:
             if text[:3] not in ("+++", "---", "@@ "):

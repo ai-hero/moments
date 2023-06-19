@@ -31,9 +31,9 @@ ct_content     = ~r'(?:[^`]|`[^`]|``[^`])*'
 tqs_content    = ~r"(?:[^']|'[^']|''[^'])*"
 says_string    = tq_string / q_string
 q_string       = '"' q_content '"'
-q_content      = ~r'(\\"|\\\\n|[^"\n])*'
+q_content      = ~r'(\\\"|[^"\n])*'
 tq_string      = '"""' tq_content '"""'
-tq_content     = ~r'[^"]*?(?=""")'
+tq_content     = ~r'((\\"|[^"])|[^"\\])*?(?=""")'
 string         = ~r'[^\n]+'
 title          = ~r'[^\-]+'
 id             = number / 'unidentified' / 'unknown'

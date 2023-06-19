@@ -89,7 +89,7 @@ class Self(Occurrence):
     def __str__(self) -> str:
         emotion, says = self.content["emotion"], self.content["says"]
         emotion_str = f"({emotion}) " if emotion else ""
-        says = says.replace('"', '\\"')
+        says = says.replace('"', '\x5c"')
         says_str = f'"""{says}"""' if "\n" in says else f'"{says}"'
         return f"Self: {emotion_str}{says_str}"
 
